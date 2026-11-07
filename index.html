@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f2f2e9">
+  <meta name="description" content="基于原文的 TransfHAR 交互式论文学习和30分钟组会分享。">
+  <title>TransfHAR · 论文交互实验室</title>
+  <link rel="stylesheet" href="./vendor/katex-embedded.css">
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./vendor/katex.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#problem" aria-label="TransfHAR 论文学习首页"><span class="brand-mark">T<span>.</span></span><span><strong>TransfHAR</strong><small>PAPER LAB / 2026</small></span></a>
+      <div class="sidebar-intro"><span class="eyebrow">RESEARCH WALKTHROUGH</span><p>从腕部信号<br>到个性化识别</p><div class="side-meta">30 分钟 <span>•</span> 14 个章节</div></div>
+      <div class="side-label">学习路径 <span>01—14</span></div>
+      <nav id="nav" aria-label="论文章节"></nav>
+      <div class="side-bottom"><span class="dot"></span><span>论文原文 · arXiv v2</span><button class="evidence-link" data-page="1" type="button">原文 ↗</button></div>
+    </aside>
+    <div class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="menuBtn" type="button" aria-label="显示或隐藏目录" aria-expanded="false">☰</button>
+        <div class="top-label"><span class="top-dot"></span><span>论文精读 <i>/</i> <b id="topChapter">研究问题</b></span></div>
+        <div class="toolbar"><button class="paper-link" id="paperOpen" type="button">论文原文 ↗</button><button class="top-control" id="notesBtn" type="button" aria-pressed="false">讲稿</button><button class="present-control" id="presentBtn" type="button" aria-pressed="false"><span>◧</span> 演讲模式</button></div>
+      </header>
+      <div class="progress-track"><div id="progressFill"></div></div>
+      <main id="main" tabindex="-1"><div class="loading">正在打开论文学习内容…</div></main>
+      <footer class="bottom-bar"><div class="bottom-status"><span id="footIndex">01 / 14</span><span class="footer-divider"></span><span id="footTitle">研究问题</span></div><div class="bottom-actions"><button id="previous" class="page-button" type="button" aria-label="上一节">← <span>上一节</span></button><button id="next" class="page-button next" type="button"><span>下一节</span> →</button></div></footer>
+    </div>
+  </div>
+  <dialog id="figureDialog" aria-label="论文原图"><div class="modal-head"><div><span class="eyebrow">ORIGINAL PAPER</span><h2 id="figureTitle">论文原图</h2></div><button id="closeFigure" type="button" aria-label="关闭原图">✕</button></div><div class="modal-image"><img id="figureImage" alt=""></div><p id="figureCaption"></p><button class="evidence-link" id="figurePage" type="button">查看本图所在的原文页 ↗</button></dialog>
+  <dialog id="paperDialog" aria-label="论文原文页面"><div class="modal-head"><div><span class="eyebrow">PAPER VIEWER · 论文原文</span><h2>对照论文原页</h2></div><button id="closePaper" type="button" aria-label="关闭原文">✕</button></div><div class="paper-toolbar"><button id="paperPrev" type="button" aria-label="上一原文页">←</button><label for="paperSelect">物理页码</label><select id="paperSelect" aria-label="选择论文页"></select><button id="paperNext" type="button" aria-label="下一原文页">→</button><span class="paper-spacer"></span><button id="zoomOut" type="button" aria-label="缩小原文">−</button><span id="zoomLabel">100%</span><button id="zoomIn" type="button" aria-label="放大原文">＋</button></div><div class="paper-scroll" id="paperScroll"><img id="paperImage" alt="TransfHAR 原论文页面"></div><p class="paper-credit">Bradshaw, Arakawa, Liu & Ahuja · TransfHAR · arXiv:2608.15861v2 · CC BY 4.0。点击各章节页码可直接定位。</p></dialog>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
