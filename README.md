@@ -15,7 +15,7 @@
 
 ### 方式一：离线单文件
 
-下载仓库后，直接用现代浏览器打开 [TransfHAR_30min_Offline.html](TransfHAR_30min_Offline.html)。该文件内嵌课程内容、公式库和论文页面图像，适合离线分享。WebGL 不可用时，相关交互会使用 Canvas 兼容视图。
+下载仓库后，直接用现代浏览器打开 [transfhar-explorer.html](transfhar-explorer.html)。该文件内嵌课程内容、公式库和论文页面图像，适合离线分享。WebGL 不可用时，相关交互会使用 Canvas 兼容视图。
 
 ### 方式二：修改源码并本地预览
 
@@ -50,7 +50,7 @@ transfhar-explorer/
 ├── token-state.mjs                    # Token 索引、遮挡和张量形状计算
 ├── course.json                        # 章节内容、公式、来源与讲解提示
 ├── build_offline.py                   # 生成独立离线 HTML
-├── TransfHAR_30min_Offline.html       # 可直接打开的离线网页
+├── transfhar-explorer.html       # 可直接打开的离线网页
 ├── TransfHAR_30min_Speaker_Notes.md   # 约 30 分钟讲稿
 ├── transfhar.course.zip               # 课程数据包
 ├── VERIFICATION.md                    # 内容和功能核查记录

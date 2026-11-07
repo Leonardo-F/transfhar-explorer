@@ -2,7 +2,7 @@
 from pathlib import Path
 import base64,json,re
 root=Path(__file__).resolve().parent
-out=root/'TransfHAR_30min_Offline.html'
+out=root/'transfhar-explorer.html'
 html=(root/'index.html').read_text('utf8')
 css=(root/'vendor/katex-embedded.css').read_text('utf8')+'\n'+(root/'style.css').read_text('utf8')
 katex=(root/'vendor/katex.min.js').read_text('utf8')
@@ -19,7 +19,7 @@ for before,after in [
  ("$('#paperImage').src=`assets/pages/page-${p}.webp`","$('#paperImage').src=assetURLs['page-'+p]"),
 ]:
  assert before in app,before;app=app.replace(before,after)
-for name in ['transfhar-source.zip','TransfHAR_30min_Offline.html','TransfHAR_30min_Speaker_Notes.md','transfhar.course.zip']:
+for name in ['transfhar-source.zip','transfhar-explorer.html','TransfHAR_30min_Speaker_Notes.md','transfhar.course.zip']:
  app=re.sub(r'<a href="'+re.escape(name)+r'" download>.*?</a>','',app)
 start=app.find("try {const r=await fetch('./course.json')");assert start>=0
 app=app[:start]+"try {course=JSON.parse(document.getElementById('embeddedCourse').textContent);const i=course.lessons.findIndex(x=>x.id===location.hash.slice(1));current=i<0?0:i;render()}catch(error){$('#main').textContent='无法载入课程内容：'+error.message}"
