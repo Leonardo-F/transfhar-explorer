@@ -4,37 +4,49 @@ import base64,json,re
 root=Path(__file__).resolve().parent
 out=root/'transfhar-explorer.html'
 html=(root/'index.html').read_text('utf8')
-css=(root/'vendor/katex-embedded.css').read_text('utf8')+'\n'+(root/'style.css').read_text('utf8')
+
+def data_url(path,mime):
+    return f'data:{mime};base64,'+base64.b64encode(path.read_bytes()).decode('ascii')
+
+# KaTeX stylesheet + fonts: the lean CSS references external woff2 files, which are
+# inlined again so the offline page stays a single file.
+css=(root/'vendor/katex-embedded.lean.css').read_text('utf8')+'\n'+(root/'style.css').read_text('utf8')
+def inline_font(match):
+    return 'url('+data_url(root/'vendor'/'fonts'/match.group(1),'font/woff2')+')'
+css,font_count=re.subn(r'url\(fonts/([A-Za-z0-9_.-]+\.woff2)\)',inline_font,css)
+assert font_count==13, font_count
 katex=(root/'vendor/katex.min.js').read_text('utf8')
-lib=(root/'vendor/three.module.js').read_text('utf8')
-assert lib.count('\nexport {')==1
-lib=re.sub(r'\nexport \{[^\n]+\};\s*$','\n',lib)
-view=(root/'three-view.js').read_text('utf8').replace("import * as THREE from './vendor/three.module.js';",'').replace('export function makeThreeView','function makeThreeView').replace('export function makeTokenView','function makeTokenView')
+
+# Minified, tree-shaken Three.js bundle. Regenerate with:
+#   cd .cache/build-tools && ./node_modules/.bin/esbuild three-entry.js \
+#     --bundle --minify --format=iife --global-name=THREE \
+#     --legal-comments=none --outfile=../../vendor/three.min.js
+lib=(root/'vendor/three.min.js').read_text('utf8')
+assert lib.startswith('var THREE=') and lib.rstrip().endswith('})();'), 'unexpected three bundle'
+
+view=(root/'three-view.js').read_text('utf8').replace("import * as THREE from './vendor/three.min.module.js';",'').replace('export function makeThreeView','function makeThreeView').replace('export function makeTokenView','function makeTokenView')
 pipeline=(root/'pipeline-view.js').read_text('utf8').replace('export const PIPELINE_STEPS','const PIPELINE_STEPS').replace('export function pipelineMask','function pipelineMask').replace('export function visibleIndex','function visibleIndex').replace('export function makePipelineView','function makePipelineView')
-app=(root/'app.js').read_text('utf8').replace("import {makeThreeView,makeTokenView} from './three-view.js';",'').replace("import {makePipelineView} from './pipeline-view.js';",'').replace("import {describeToken,networkShapes} from './token-state.mjs';",'')
+app=(root/'app.js').read_text('utf8').replace("loadThreeView().then(","Promise.resolve({makeThreeView,makeTokenView}).then(").replace("const loadThreeView=()=>import('./three-view.js');",'').replace("import {makePipelineView} from './pipeline-view.js';",'').replace("import {describeToken,networkShapes} from './token-state.mjs';",'')
 tokenstate=(root/'token-state.mjs').read_text('utf8').replace('export function ','function ')
 for before,after in [
- ("function inlineSourceUrl(kind,id){return kind==='figure'?`assets/${id}.png`:`assets/pages/page-${String(id).padStart(2,'0')}.webp`}", "function inlineSourceUrl(kind,id){return kind==='figure'?assetURLs[id]:assetURLs['page-'+String(id).padStart(2,'0')] }"),
- ('src="assets/fig1.png"','src="${assetURLs.fig1}"'),
- ("$('#figureImage').src=`assets/${id}.png`","$('#figureImage').src=assetURLs[id]"),
- ("$('#paperImage').src=`assets/pages/page-${p}.webp`","$('#paperImage').src=assetURLs['page-'+p]"),
+ ("function inlineSourceUrl(kind,id){return kind==='figure'?`assets/${id}.webp`:`assets/pages/page-${String(id).padStart(2,'0')}.webp`}", "function inlineSourceUrl(kind,id){return kind==='figure'?assetURLs[id]:assetURLs['page-'+String(id).padStart(2,'0')] }"),
+ ('src="assets/fig1.webp"','src="${assetURLs.fig1}"'),
 ]:
  assert before in app,before;app=app.replace(before,after)
 for name in ['transfhar-source.zip','transfhar-explorer.html','TransfHAR_30min_Speaker_Notes.md']:
  app=re.sub(r'<a href="'+re.escape(name)+r'" download>.*?</a>','',app)
 start=app.find("try {const r=await fetch('./course.json')");assert start>=0
-app=app[:start]+"try {course=JSON.parse(document.getElementById('embeddedCourse').textContent);const i=course.lessons.findIndex(x=>x.id===location.hash.slice(1));current=i<0?0:i;render()}catch(error){$('#main').textContent='无法载入课程内容：'+error.message}"
+app=app[:start]+"try {course=JSON.parse(document.getElementById('embeddedCourse').textContent);const i=course.lessons.findIndex(x=>x.id===location.hash.slice(1));current=i<0?0:i;render();setMenu(false);syncPressed()}catch(error){$('#main').textContent='无法载入课程内容：'+error.message}"
 assets={}
-for i in range(1,10):
- p=root/'assets'/f'fig{i}.png';assets[f'fig{i}']='data:image/png;base64,'+base64.b64encode(p.read_bytes()).decode('ascii')
+for i in range(1,9):
+ assets[f'fig{i}']=data_url(root/'assets'/f'fig{i}.webp','image/webp')
 for i in range(1,17):
- p=root/'assets'/'pages'/f'page-{i:02}.webp';assets[f'page-{i:02}']='data:image/webp;base64,'+base64.b64encode(p.read_bytes()).decode('ascii')
+ assets[f'page-{i:02}']=data_url(root/'assets'/'pages'/f'page-{i:02}.webp','image/webp')
 course=(root/'course.json').read_text('utf8')
-three='WebGLRenderer,Scene,PerspectiveCamera,Vector3,Vector2,Group,MeshBasicMaterial,LineBasicMaterial,BoxGeometry,Mesh,LineSegments,EdgesGeometry,Raycaster,Geometry,Line'
-code='(function(){\nconst THREE=(()=>{\n'+lib+'\nreturn {'+three+'};\n})();\nconst assetURLs=JSON.parse(document.getElementById("embeddedAssets").textContent);\n'+view+'\n'+pipeline+'\n'+tokenstate+'\n'+app+'\n})();'
+code='(function(){\n'+lib+'\nconst assetURLs=JSON.parse(document.getElementById("embeddedAssets").textContent);\n'+view+'\n'+pipeline+'\n'+tokenstate+'\n'+app+'\n})();'
 for label,x in [('code',code),('katex',katex),('course',course)]: assert '</script' not in x.lower(),label
 assert '</style' not in css.lower()
-html=html.replace('<link rel="stylesheet" href="./vendor/katex-embedded.css">\n  <link rel="stylesheet" href="./style.css">','<style>\n'+css+'\n</style>')
+html=html.replace('<link rel="stylesheet" href="./vendor/katex-embedded.lean.css">\n  <link rel="stylesheet" href="./style.css">','<style>\n'+css+'\n</style>')
 html=html.replace('<script defer src="./vendor/katex.min.js"></script>','<script>'+katex+'</script>')
 html=html.replace('<script type="module" src="./app.js"></script>','<script type="application/json" id="embeddedCourse">'+course+'</script>\n<script type="application/json" id="embeddedAssets">'+json.dumps(assets,separators=(',',':'))+'</script>\n<script>'+code+'</script>')
 license_notice=(root/'vendor/THREE-LICENSE.txt').read_text('utf8').replace('--','—')+'\n'+(root/'vendor/KATEX-LICENSE.txt').read_text('utf8').replace('--','—')

@@ -15,7 +15,7 @@
 
 ### 方式一：离线单文件
 
-下载仓库后，直接用现代浏览器打开 [transfhar-explorer.html](transfhar-explorer.html)。该文件内嵌课程内容、公式库和论文页面图像，适合离线分享。WebGL 不可用时，相关交互会使用 Canvas 兼容视图。
+下载仓库后，直接用现代浏览器打开 [transfhar-explorer.html](transfhar-explorer.html)。该文件约 5.1 MB，内嵌课程内容、公式、字体和论文页面图像，适合离线分享。WebGL 不可用时，相关交互会使用 Canvas 兼容视图。
 
 ### 方式二：修改源码并本地预览
 
@@ -38,7 +38,24 @@ node tests/token-state.test.mjs
 node tests/pipeline-state.test.mjs
 ```
 
-页面中的源码压缩包下载按钮依赖根目录下的 `transfhar-source.zip`；仓库不包含该自引用压缩包。可以使用 GitHub 的 **Code → Download ZIP** 下载源码，这不影响网页其他功能。
+源码请使用 GitHub 的 **Code → Download ZIP** 下载；网页中的下载区只保留离线单文件、讲稿与许可入口。
+
+## 资源与依赖的重新生成
+
+构建脚本只依赖 Python 标准库；只有重新生成图片、字体或压缩版 Three.js 时才需要额外工具：
+
+```bash
+# 论文页截图（120 DPI、裁白边、WebP）、figure 裁切与精简 KaTeX 样式
+python3 build_assets.py            # 需要 Python Pillow 与 poppler 的 pdftoppm
+
+# 压缩版 Three.js（esbuild，见 tools/three-entry.js 与 vendor/README.md）
+npx esbuild tools/three-entry.js --bundle --minify --format=iife --global-name=THREE \
+  --legal-comments=none --outfile=vendor/three.min.js
+npx esbuild tools/three-entry.js --bundle --minify --format=esm \
+  --legal-comments=none --outfile=vendor/three.min.module.js
+```
+
+生成的 `vendor/three.min.*`、`vendor/fonts/`、`assets/fig*.webp` 与 `assets/pages/*.webp` 已提交到仓库，日常修改文字或交互后只需运行 `python3 build_offline.py`。
 
 ## 文件目录
 
@@ -52,30 +69,41 @@ transfhar-explorer/
 ├── token-state.mjs                    # Token 索引、遮挡和张量形状计算
 ├── course.json                        # 章节内容、公式、来源与讲解提示
 ├── build_offline.py                   # 生成独立离线 HTML
-├── transfhar-explorer.html       # 可直接打开的离线网页
+├── build_assets.py                    # 重新生成页面图、figure 与精简 KaTeX 样式
+├── transfhar-explorer.html            # 可直接打开的离线网页（约 5.1 MB）
 ├── TransfHAR_30min_Speaker_Notes.md   # 约 30 分钟讲稿
 ├── VERIFICATION.md                    # 内容和功能核查记录
 ├── REVIEW_NOTES.md                    # 审查说明与待核实事项
 ├── tests/
 │   ├── token-state.test.mjs           # 索引、遮挡及形状测试
 │   └── pipeline-state.test.mjs        # 11 步流程与遮挡计数测试
+├── tools/
+│   └── three-entry.js                 # 压缩版 Three.js 的打包入口
 ├── assets/
 │   ├── paper.pdf                      # 论文原文
-│   ├── fig1.png … fig9.png            # 论文图像裁切
-│   └── pages/                         # 论文 16 页截图
-└── vendor/                            # Three.js、KaTeX 与第三方许可
+│   ├── fig1.webp … fig8.webp          # 网页使用的论文图像裁切
+│   ├── fig1.png … fig8.png            # 转换前的 PNG 源图（保留以便重新生成）
+│   └── pages/                         # 论文 16 页截图（WebP，120 DPI）
+└── vendor/                            # Three.js、KaTeX、压缩版与字体
 ```
-
-修改讲解文字和章节时优先查看 `course.json`；修改互动逻辑查看 `app.js`、`pipeline-view.js` 与 `three-view.js`；修改外观查看 `style.css`。离线单文件由上述源码生成，修改后需重新运行构建脚本。
 
 ## 演示操作
 
-- 用左右方向键切换章节；在放大的模型演示中切换步骤，按 Esc 退出。
+- 键盘：`←` / `→` 切换章节；在分步数据流内用 `←` / `→` 切换步骤；`Esc` 退出放大演示或关闭移动端目录；页面顶部有“跳到正文”链接。
 - 模型章节默认打开“分步数据流”：点击顶部 11 个步骤，或用“上一步/下一步”逐步查看；点击下方网格里的任意 Token，可在后续步骤追踪它是否被遮挡、在编码器输入中的序号以及位置。
-- 在“分步数据流”顶部切换 3 轴/6 轴和随机/时间/通道遮挡，所有计数与形状随之变化。
+- 在“分步数据流”顶部切换 3 轴/6 轴和随机/时间/通道遮挡，所有计数与形状随之变化；第 9 步起显示推理路径。
 - “3D结构总览”保留可旋转、缩放的三维示意；WebGL 不可用时退回 Canvas 兼容视图。
 - 三维面板支持图内缩放按钮、鼠标滚轮和恢复视角；触屏可使用双指缩放。
+- 移动端点击左上角菜单打开目录，可用关闭按钮、遮罩或 `Esc` 退出。
 - 通过论文图和原页切换核对结论；讲稿提供逐章讲解提示。
+
+## 性能与可访问性
+
+- **离线包体积**：从 8.49 MB 降到约 5.1 MB（gzip 约 3.3 MB）。做法包括论文页按 120 DPI 重新渲染并裁掉白边、figure 转 WebP、Three.js 压缩、裁掉未使用的 KaTeX 字族、不再内嵌未引用的图。
+- **首屏**：模块版默认章节不再下载 Three.js 和 KaTeX 字体；3D 视图与 Token 实验在进入模型章节后才惰性加载，论文原图/页面按需加载，图片带尺寸或延迟解码以减少布局抖动。
+- **无障碍**：跳过链接、方向键作用域（不会在控件上误翻章）、分步数据流焦点保持、移动端目录 `inert`/`Esc`/遮罩、可选状态补充 `aria-pressed`/`aria-current`、提高小字对比度与焦点环对比度。
+- **动效偏好**：尊重 `prefers-reduced-motion`，开启后 3D 改为单帧渲染、关闭持续粒子与脉冲动画，平滑滚动改为即时跳转。
+- **演讲模式**：放大标题与分步数据流说明文字，便于投影讲解。
 
 ## 论文与许可
 

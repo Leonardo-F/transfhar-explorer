@@ -126,3 +126,33 @@ body.demo-focus{overflow:hidden}.token-lab-v2.is-focus,.network-card.is-focus{po
  .pv-svg{min-width:680px}
  .pv-toolbar{gap:6px}
 }
+
+/* Accessibility, mobile navigation and projection tuning. */
+.skip-link{position:fixed;left:12px;top:-70px;z-index:200;background:#183d32;color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;transition:top .2s}
+.skip-link:focus{top:12px}
+#main:focus{outline:none}
+button:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid #1d5c40;outline-offset:2px;box-shadow:0 0 0 5px #ffffffb3}
+.sidebar-close,.sidebar-scrim{display:none}
+@media(max-width:700px){
+ .sidebar-close{display:grid;place-items:center;position:absolute;right:10px;top:10px;width:34px;height:34px;border:1px solid #d5ded0;border-radius:8px;background:#fff;color:#3f5b49;font-size:15px;z-index:2}
+ .sidebar-scrim{display:block;position:fixed;inset:0;z-index:14;background:rgba(16,33,24,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+ .sidebar-scrim.show{opacity:1;pointer-events:auto}
+}
+/* WCAG AA pass for the small labels that were below 4.5:1. */
+:root{--muted:#5a6e63}
+.side-label,.nav-num,.nav-time,.side-meta{color:#5c7165}
+.tiny-label{color:#54685d}
+.pv-kicker,.pv-step small,.pv-tiny,.pv-note,.pv-evidence,.pv-meta span,.pv-trace,.pv-chip{color:#54685d}
+.pv-step{color:#5a6e63}
+.evidence-note,.foot-source,.canvas-stage-labels,.network-card .canvas-hint,.network-card .canvas-legend{color:#5c7165}
+.evidence-link{color:#4f7457}
+.pv-action{color:#445f4f}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+.presentation .pv-action{font-size:18px;line-height:1.7}
+.presentation .pv-meta b{font-size:15px}
+.presentation .pv-stage-head h3{font-size:23px}
+.presentation .pv-trace,.presentation .pv-chip{font-size:13px}
+.presentation .network-inspector,.presentation .flow-explanation{font-size:14px}
+.presentation .speaker-panel p,.presentation .speaker-panel li{font-size:14px}

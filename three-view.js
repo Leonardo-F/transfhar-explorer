@@ -1,4 +1,4 @@
-import * as THREE from './vendor/three.module.js';
+import * as THREE from './vendor/three.min.module.js';
 
 // Zoom stays local to the drawing surface; scrolling elsewhere still scrolls the page.
 function makeZoomController(canvas, apply, onZoom=()=>{}){
@@ -34,6 +34,7 @@ function pathPos(path,u){const d=Math.max(0,Math.min(1,u))*path.total;let i=1;wh
 export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
  let canvas=originalCanvas,renderer,scene,camera,root,frame,ctx,drag=false,moved=false,lastX=0,lastY=0,pickables=[],hits=[];
  let state={axes:6,mode:'random',stage:'mask',spread:1,phase:'masked',focusStep:0,row:0,col:0};
+ const REDUCE_MOTION=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  let tokenMeshes=[],tempGeos=[],particles=[],selectedRef=null,raycaster,mouse;
  const HOME={x:-.3,y:.5};
  const axisColors=[0xe69d75,0xe6c574,0xdb9c83,0x71bdb0,0xa4cfc1,0x8bb9a5];
@@ -208,7 +209,7 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
    }
   }
   // ---- Flow particles: channel-colored dots riding visible tokens through the network.
-  if(step>=2){
+  if(step>=2&&!REDUCE_MOTION){
    const maskedList=[...hidden];
    for(let n=0;n<14;n++){
     const row=n%axes;let col0=(n*7)%32;
@@ -227,6 +228,7 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
   applySelection();
   if(camera.aspect)fit();
   axisA.forEach(m=>m.opacity=state.focusStep<=1?1:.5);
+  if(REDUCE_MOTION)renderer.render(scene,camera);
   info(false);
  }
  // Cheap selection change: swap materials without rebuilding the scene.
@@ -242,9 +244,10 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
   mesh.material=mat.sel;selectedRef={mesh,baseY:mesh.position.y};
   const edge=new THREE.LineSegments(geo.sel,mat.selEdge);edge.position.copy(mesh.position);root.add(edge);selectedRef.edge=edge;
  }
- function resize(){const r=canvas.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=Math.max(.1,r.width/r.height);fit()}
+ function resize(){const r=canvas.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=Math.max(.1,r.width/r.height);fit();if(REDUCE_MOTION)renderer.render(scene,camera)}
  let last=performance.now();
  function animate(){
+  if(REDUCE_MOTION){renderer.render(scene,camera);return}
   frame=requestAnimationFrame(animate);
   if(document.hidden||canvas.offsetParent===null){last=performance.now();return}
   const now=performance.now(),t=now/1000;last=now;
@@ -262,7 +265,7 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
  function move(e){if(!drag||zoomControl.isPinching())return;const dx=e.clientX-lastX,dy=e.clientY-lastY;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;root.rotation.y+=dx*.008;root.rotation.x=Math.max(-1,Math.min(1,root.rotation.x+dy*.008));lastX=e.clientX;lastY=e.clientY}
  function up(e){if(drag&&!moved){const r=canvas.getBoundingClientRect();mouse.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(pickables,false)[0];if(hit){state.row=hit.object.userData.row;state.col=hit.object.userData.col;applySelection();info(false)}}drag=false}
  canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);window.addEventListener('resize',resize);rebuild();resize();animate();
- return {update(config){const prev={...state};Object.assign(state,config);state.row=Math.min(state.row,state.axes-1);state.col=Math.max(0,Math.min(31,state.col));const structural=prev.axes!==state.axes||prev.mode!==state.mode||prev.focusStep!==state.focusStep||prev.phase!==state.phase||prev.spread!==state.spread;if(structural)rebuild();else{applySelection();info(false)}},resize,zoomIn(){zoomControl.in()},zoomOut(){zoomControl.out()},resetView(){root.rotation.set(HOME.x,HOME.y,0);fit();zoomControl.reset()},destroy(){zoomControl.destroy();cancelAnimationFrame(frame);window.removeEventListener('resize',resize);canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointermove',move);canvas.removeEventListener('pointerup',up);canvas.removeEventListener('pointercancel',up);Object.values(geo).forEach(g=>g.dispose());tempGeos.forEach(g=>g.dispose());Object.values(mat).forEach(m=>m.dispose());axisA.forEach(m=>m.dispose());axisR.forEach(m=>m.dispose());axisDot.forEach(m=>m.dispose());panelMats.forEach(m=>m.dispose());attenMats.forEach(m=>m.dispose());try{renderer.forceContextLoss()}catch(e){}renderer.dispose()}};
+ return {update(config){const prev={...state};Object.assign(state,config);state.row=Math.min(state.row,state.axes-1);state.col=Math.max(0,Math.min(31,state.col));const structural=prev.axes!==state.axes||prev.mode!==state.mode||prev.focusStep!==state.focusStep||prev.phase!==state.phase||prev.spread!==state.spread;if(structural)rebuild();else{applySelection();if(REDUCE_MOTION)renderer.render(scene,camera);info(false)}},resize,zoomIn(){zoomControl.in()},zoomOut(){zoomControl.out()},resetView(){root.rotation.set(HOME.x,HOME.y,0);fit();zoomControl.reset()},destroy(){zoomControl.destroy();cancelAnimationFrame(frame);window.removeEventListener('resize',resize);canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointermove',move);canvas.removeEventListener('pointerup',up);canvas.removeEventListener('pointercancel',up);Object.values(geo).forEach(g=>g.dispose());tempGeos.forEach(g=>g.dispose());Object.values(mat).forEach(m=>m.dispose());axisA.forEach(m=>m.dispose());axisR.forEach(m=>m.dispose());axisDot.forEach(m=>m.dispose());panelMats.forEach(m=>m.dispose());attenMats.forEach(m=>m.dispose());try{renderer.forceContextLoss()}catch(e){}renderer.dispose()}};
  function makeFallback(){
   canvas=originalCanvas.cloneNode(false);originalCanvas.replaceWith(canvas);ctx=canvas.getContext('2d');if(!ctx){onInfo({failed:true});return {update(){},resize(){},zoomIn(){},zoomOut(){},resetView(){},destroy(){}}}
   let zoom=1,yaw=.35,pitch=-.25,viewW=1,viewH=1;const zoomControl=makeZoomController(canvas,z=>{zoom=z;draw()},onZoom);

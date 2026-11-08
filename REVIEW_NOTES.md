@@ -39,3 +39,21 @@
 - 分步数据流的版式在 1440 px 桌面和 390 px 手机模拟视口检查过；投影仪、Safari 和真实触屏仍需现场确认。
 - 手机上图内保留最小宽度并允许横向滚动，避免把 1000×345 的 SVG 压到不可读；如果希望手机上也完整缩放显示，需要另做纵向重排。
 - 合成波形只用于说明“4 点 → 1 个 patch”和“重建 4 点”，不用于推断频谱、幅度或模型效果。
+
+## 本次更新：体积、首屏与无障碍（2026-11-09）
+
+- 离线单文件从 8.49 MB 降到约 5.07 MB（gzip 5.51 → 3.28 MB）。论文页改为从 `assets/paper.pdf` 以 120 DPI 重新渲染（约 120 DPI、裁掉白边、WebP q60），而不是对旧 WebP 二次压缩；figure 由 PNG 转 WebP q92；Three.js 改用 esbuild 压缩并只导出实际用到的 14 个类；KaTeX 只内嵌 Main/Math/Size1–4/AMS/Caligraphic 共 13 个字体，去掉 Fraktur/SansSerif/Script/Typewriter。
+- 评估后放弃 AVIF：同尺寸下 AVIF 只比 WebP 小约 5–10%，兼容性与构建复杂度不值得。保留 `assets/fig*.png` 作为转换源，`build_assets.py` 可重新生成图片与精简 KaTeX 样式。
+- 模块版首屏默认不加载 Three.js（改动态 import）和 KaTeX 字体（改为外置 woff2）；论文原图/页面在切换标签时才请求图片；3D 与 Token 实验视图按需创建。默认章节首屏从约 2.20 MB raw / 819 KB gzip 降到约 0.58 MB raw / 约 165 KB gzip。
+- 无障碍：方向键作用域、分步数据流焦点保持、移动端目录关闭/遮罩/`Esc`/`inert`、跳过链接、`aria-pressed`/`aria-current`、canvas `role="img"`、小字与焦点环对比度、`prefers-reduced-motion`。演讲模式放大分步数据流与讲稿文字。
+- 状态同步：分步数据流不再把 3D 的推理模式拉回随机/训练，只有显式选择遮挡模式或跨到第 9 步时才同步。
+- 清理死代码：移除从未打开的 `figureDialog`/`paperDialog` 及其脚本；移除指向不存在文件的源码下载按钮；不再内嵌未被引用的图。
+
+## 仍需人工确认（2026-11-09）
+
+- 未接入 axe/Playwright 自动化无障碍与视觉回归；本轮用脚本抽查键盘、焦点、`inert`、`prefers-reduced-motion` 与两种 WebGL 环境。
+- `inert` 依赖较新的浏览器；Safari 15 以下与旧版 Android WebView 需实机确认。
+- 3D 仍是逐 Mesh 绘制（r94 无 InstancedMesh），默认视角下 token 网格会连成一块“板”；几何合并与视觉再设计留待后续。
+- 论文页重新渲染后文字更清晰，但 200% 放大仍会发虚；阅读器只保留在页对照，不替代 PDF。
+- 演讲模式只放大了标题、分步数据流说明与讲稿，未整体重排；1280×720 与 1920×1080 投影仍需现场确认。
+

@@ -434,10 +434,31 @@ export function makePipelineView(host, { lesson = 'tokens', onState = () => {} }
   const state = { lesson, step: LESSON_START[lesson] ?? 0, axes: 6, mode: 'random', row: 0, col: 0 };
   let destroyed = false;
 
-  const emit = () => onState({ axes: state.axes, mode: state.step >= 9 ? 'inference' : state.mode, row: state.row, col: state.col });
+  const emit = (withMode = false) => onState({ axes: state.axes, row: state.row, col: state.col, ...(withMode ? { mode: state.step >= 9 ? 'inference' : state.mode } : {}) });
 
+  function focusKey(){
+    const a = document.activeElement;
+    if (!a || !host.contains(a)) return null;
+    const step = a.closest('[data-pv-step]'); if (step) return { step: Number(step.dataset.pvStep) };
+    const cell = a.closest('[data-row]'); if (cell) return { row: Number(cell.dataset.row), col: Number(cell.dataset.col) };
+    const ax = a.closest('[data-pv-axes]'); if (ax) return { axes: Number(ax.dataset.pvAxes) };
+    const md = a.closest('[data-pv-mode]'); if (md) return { mode: md.dataset.pvMode };
+    if (a.id === 'pvPrev' || a.id === 'pvNext') return { nav: a.id };
+    return null;
+  }
+  function restoreFocus(key){
+    if (!key) return;
+    let el = null;
+    if (key.step != null) el = host.querySelector(`[data-pv-step="${key.step}"]`);
+    else if (key.row != null) el = host.querySelector(`[data-row="${key.row}"][data-col="${key.col}"]`);
+    else if (key.axes != null) el = host.querySelector(`[data-pv-axes="${key.axes}"]`);
+    else if (key.mode) el = host.querySelector(`[data-pv-mode="${key.mode}"]`);
+    else if (key.nav) el = host.querySelector('#' + key.nav);
+    if (el && el.isConnected && !el.disabled) el.focus({ preventScroll: true });
+  }
   function render() {
     if (destroyed || !host) return;
+    const focus = focusKey();
     const rawMask = pipelineMask(state.axes, state.mode);
     const mask = state.step >= 4 && state.step <= 8 ? rawMask : new Set();
     const total = state.axes * 32;
@@ -481,13 +502,13 @@ export function makePipelineView(host, { lesson = 'tokens', onState = () => {} }
         </div>
         <div class="pv-toolbar">
           <div class="segment" role="group" aria-label="轴数">
-            <button type="button" data-pv-axes="3" class="${state.axes === 3 ? 'active' : ''}">3 轴</button>
-            <button type="button" data-pv-axes="6" class="${state.axes === 6 ? 'active' : ''}">6 轴</button>
+            <button type="button" data-pv-axes="3" class="${state.axes === 3 ? 'active' : ''}" aria-pressed="${state.axes === 3}">3 轴</button>
+            <button type="button" data-pv-axes="6" class="${state.axes === 6 ? 'active' : ''}" aria-pressed="${state.axes === 6}">6 轴</button>
           </div>
           <div class="segment" role="group" aria-label="遮挡模式">
-            <button type="button" data-pv-mode="random" class="${state.mode === 'random' ? 'active' : ''}" ${state.step >= 9 ? 'disabled' : ''}>随机</button>
-            <button type="button" data-pv-mode="time" class="${state.mode === 'time' ? 'active' : ''}" ${state.step >= 9 ? 'disabled' : ''}>时间</button>
-            <button type="button" data-pv-mode="channel" class="${state.mode === 'channel' ? 'active' : ''}" ${state.step >= 9 ? 'disabled' : ''}>通道</button>
+            <button type="button" data-pv-mode="random" class="${state.mode === 'random' ? 'active' : ''}" aria-pressed="${state.mode === 'random'}" ${state.step >= 9 ? 'disabled' : ''}>随机</button>
+            <button type="button" data-pv-mode="time" class="${state.mode === 'time' ? 'active' : ''}" aria-pressed="${state.mode === 'time'}" ${state.step >= 9 ? 'disabled' : ''}>时间</button>
+            <button type="button" data-pv-mode="channel" class="${state.mode === 'channel' ? 'active' : ''}" aria-pressed="${state.mode === 'channel'}" ${state.step >= 9 ? 'disabled' : ''}>通道</button>
           </div>
           <span class="pv-trace">追踪：<b>${AXIS[state.row]} · 片段 ${state.col}</b>（采样点 ${state.col * 4}–${state.col * 4 + 3}）</span>
           <div class="pv-nav"><button type="button" id="pvPrev" ${state.step === 0 ? 'disabled' : ''}>← 上一步</button><span>${state.step + 1} / ${PIPELINE_STEPS.length}</span><button type="button" id="pvNext" ${state.step === PIPELINE_STEPS.length - 1 ? 'disabled' : ''}>下一步 →</button></div>
@@ -500,7 +521,7 @@ export function makePipelineView(host, { lesson = 'tokens', onState = () => {} }
             <span class="pv-chip">${step.group === 'A' ? (state.step <= 3 ? '不遮挡' : '遮挡训练') : '冻结编码器'}</span>
           </div>
           <p class="pv-action">${esc(action)}</p>
-          <div class="pv-figure"><svg viewBox="0 0 1000 345" class="pv-svg" role="img" aria-label="${esc(step.title)}">${ARROW}${stepSvg(state, mask)}</svg></div>
+          <div class="pv-figure" tabindex="0" role="region" aria-label="流程示意图，可左右滚动"><svg viewBox="0 0 1000 345" class="pv-svg" role="img" aria-label="${esc(step.title)}">${ARROW}${stepSvg(state, mask)}</svg></div>
           <div class="pv-meta">
             <div><span>输入</span><b>${esc(stageInput)}</b></div>
             <div><span>这一步的关键数字</span><b>${keyText}</b></div>
@@ -509,19 +530,22 @@ export function makePipelineView(host, { lesson = 'tokens', onState = () => {} }
           <p class="pv-evidence">依据：${esc(step.evidence)}。波形与重建柱为教学示意，不含论文模型权重或真实样本。 <button class="evidence-link" type="button" data-page="${state.step === 10 ? 6 : 5}">对照原文第 ${state.step === 10 ? 6 : 5} 页 ↗</button></p>
         </div>
       </div>`;
+    restoreFocus(focus);
+    const railEl = host.querySelector('.pv-rail'), activeStep = host.querySelector('.pv-step.active');
+    if (railEl && activeStep) railEl.scrollLeft = Math.max(0, activeStep.offsetLeft - railEl.clientWidth / 2 + activeStep.clientWidth / 2);
   }
 
   function onClick(e) {
     const step = e.target.closest('[data-pv-step]');
-    if (step) { state.step = Number(step.dataset.pvStep); render(); return; }
+    if (step) { const wasInference = state.step >= 9; state.step = Number(step.dataset.pvStep); if (wasInference !== (state.step >= 9)) emit(true); render(); return; }
     const ax = e.target.closest('[data-pv-axes]');
     if (ax) { state.axes = Number(ax.dataset.pvAxes); state.row = Math.min(state.row, state.axes - 1); emit(); render(); return; }
     const md = e.target.closest('[data-pv-mode]');
-    if (md) { state.mode = md.dataset.pvMode; emit(); render(); return; }
+    if (md) { state.mode = md.dataset.pvMode; emit(true); render(); return; }
     const cell = e.target.closest('[data-row]');
     if (cell) { state.row = Number(cell.dataset.row); state.col = Number(cell.dataset.col); emit(); render(); return; }
-    if (e.target.closest('#pvPrev')) { state.step = Math.max(0, state.step - 1); render(); return; }
-    if (e.target.closest('#pvNext')) { state.step = Math.min(PIPELINE_STEPS.length - 1, state.step + 1); render(); }
+    if (e.target.closest('#pvPrev')) { const wasInference = state.step >= 9; state.step = Math.max(0, state.step - 1); if (wasInference !== (state.step >= 9)) emit(true); render(); return; }
+    if (e.target.closest('#pvNext')) { const wasInference = state.step >= 9; state.step = Math.min(PIPELINE_STEPS.length - 1, state.step + 1); if (wasInference !== (state.step >= 9)) emit(true); render(); }
   }
 
   host.addEventListener('click', onClick);
