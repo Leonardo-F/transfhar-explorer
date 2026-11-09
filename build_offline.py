@@ -29,7 +29,9 @@ pipeline=(root/'pipeline-view.js').read_text('utf8').replace('export const PIPEL
 app=(root/'app.js').read_text('utf8').replace("loadThreeView().then(","Promise.resolve({makeThreeView,makeTokenView}).then(").replace("const loadThreeView=()=>import('./three-view.js');",'').replace("import {makePipelineView} from './pipeline-view.js';",'').replace("import {describeToken,networkShapes} from './token-state.mjs';",'')
 tokenstate=(root/'token-state.mjs').read_text('utf8').replace('export function ','function ')
 translation=(root/'paper-zh.mjs').read_text('utf8').replace('export const paperTranslations','const paperTranslations').replace('export function getPaperTranslation','function getPaperTranslation')
+neuralmodel=(root/'neural-model.mjs').read_text('utf8').replace("import {pipelineMask} from './pipeline-view.js';",'').replace('export function ','function ')
 neural=(root/'neural-flow.mjs').read_text('utf8').replace('export function ','function ')
+neural=re.sub(r'^import .*?;\n','',neural,flags=re.M)
 app=app.replace("import {makeNeuralView} from './neural-flow.mjs';",'')
 app=app.replace("import {getPaperTranslation} from './paper-zh.mjs';",'')
 for before,after in [
@@ -47,13 +49,13 @@ for i in range(1,9):
 for i in range(1,17):
  assets[f'page-{i:02}']=data_url(root/'assets'/'pages'/f'page-{i:02}.webp','image/webp')
 course=(root/'course.json').read_text('utf8')
-code='(function(){\n'+lib+'\nconst assetURLs=JSON.parse(document.getElementById("embeddedAssets").textContent);\n'+view+'\n'+pipeline+'\n'+tokenstate+'\n'+translation+'\n'+neural+'\n'+app+'\n})();'
+code='(function(){\n'+lib+'\nconst assetURLs=JSON.parse(document.getElementById("embeddedAssets").textContent);\n'+view+'\n'+pipeline+'\n'+tokenstate+'\n'+translation+'\n'+neuralmodel+'\n'+neural+'\n'+app+'\n})();'
 for label,x in [('code',code),('katex',katex),('course',course)]: assert '</script' not in x.lower(),label
 assert '</style' not in css.lower()
 html=html.replace('<link rel="stylesheet" href="./vendor/katex-embedded.lean.css">\n  <link rel="stylesheet" href="./style.css">','<style>\n'+css+'\n</style>')
 html=html.replace('<script defer src="./vendor/katex.min.js"></script>','<script>'+katex+'</script>')
 html=html.replace('<script type="module" src="./app.js"></script>','<script type="application/json" id="embeddedCourse">'+course+'</script>\n<script type="application/json" id="embeddedAssets">'+json.dumps(assets,separators=(',',':'))+'</script>\n<script>'+code+'</script>')
-license_notice=(root/'vendor/THREE-LICENSE.txt').read_text('utf8').replace('--','—')+'\n'+(root/'vendor/KATEX-LICENSE.txt').read_text('utf8').replace('--','—')
+license_notice=(root/'LICENSE').read_text('utf8').replace('--','—')+'\n'+(root/'vendor/THREE-LICENSE.txt').read_text('utf8').replace('--','—')+'\n'+(root/'vendor/KATEX-LICENSE.txt').read_text('utf8').replace('--','—')
 html=html.replace('</head>','<!-- Third-party notices:\n'+license_notice+'\n-->\n</head>')
 assert 'src="./app.js"' not in html and 'fetch(\'./course.json\')' not in html
 out.write_text(html,encoding='utf8')

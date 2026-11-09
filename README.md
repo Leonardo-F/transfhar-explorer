@@ -39,6 +39,8 @@ python3 build_offline.py
 node tests/token-state.test.mjs
 node tests/pipeline-state.test.mjs
 node tests/learning-views.test.mjs
+node tests/neural-model.test.mjs
+node tests/neural-playback.test.mjs
 ```
 
 源码请使用 GitHub 的 **Code → Download ZIP** 下载；网页中的下载区只保留离线单文件、讲稿与许可入口。
@@ -69,7 +71,8 @@ transfhar-explorer/
 ├── pipeline-view.js                   # 模型章节的 11 步分步数据流
 ├── style.css                          # 样式与响应式布局
 ├── three-view.js                      # Three.js 结构总览与兼容视图
-├── neural-flow.mjs                    # 节点、连接与流光动画（SVG）
+├── neural-flow.mjs                    # 论文架构、Token 追踪与计算动画（SVG）
+├── neural-model.mjs                   # 可复算的分块、卷积、位置、注意力与损失算例
 ├── paper-zh.mjs                       # 按原文页组织的中文译文与译注
 ├── token-state.mjs                    # Token 索引、遮挡和张量形状计算
 ├── course.json                        # 章节内容、公式、来源与讲解提示
@@ -82,7 +85,9 @@ transfhar-explorer/
 ├── tests/
 │   ├── token-state.test.mjs           # 索引、遮挡及形状测试
 │   ├── pipeline-state.test.mjs        # 11 步流程与遮挡计数测试
-│   └── learning-views.test.mjs        # 中文对照、导航和动画交互测试
+│   ├── learning-views.test.mjs        # 中文对照、导航、答案展示和动画交互测试
+│   ├── neural-model.test.mjs          # 分块、共享卷积与模型算例的数值检查
+│   └── neural-playback.test.mjs       # 扫描、播放、隐藏暂停和阶段切换
 ├── tools/
 │   └── three-entry.js                 # 压缩版 Three.js 的打包入口
 ├── assets/
@@ -99,11 +104,15 @@ transfhar-explorer/
 - 模型章节默认打开“分步数据流”：点击顶部 11 个步骤，或用“上一步/下一步”逐步查看；点击下方网格里的任意 Token，可在后续步骤追踪它是否被遮挡、在编码器输入中的序号以及位置。
 - 在“分步数据流”顶部切换 3 轴/6 轴和随机/时间/通道遮挡，所有计数与形状随之变化；第 9 步起显示推理路径。
 - “3D结构总览”支持待机自转、拖动旋转和缩放；拖动后停止待机自转。WebGL 不可用时退回 Canvas 兼容视图。
-- “神经网络动图”使用二维 SVG 节点与流光，可自动讲解、暂停、逐步查看，并切换 3/6 轴和预训练／推理。图中节点和连线是教学示意，不是实际权重、注意力或模型输出；原 Three.js 三维视图继续保留。
+- “神经网络动图”展示论文的模块架构：4 点分块、共享 Conv1D 的 384 个特征、时间和通道位置相加、12 层 pre-norm 编码器、6 个 64 维注意力头、384→1536→384 前馈层，以及遮挡恢复／4 层解码／MSE 或均值池化／个人线性头。可以点击全部 96/192 个 Token，逐块扫描一条轴的 32 个片段，展开特征维度、注意力头和编码器层。支持暂停、单步、速度选择；手动选择会暂停，后台标签和隐藏面板会停止播放。
 - 三维面板支持图内缩放按钮、鼠标滚轮和恢复视角；触屏可使用双指缩放。
 - 移动端点击左上角菜单打开目录，可用关闭按钮、遮罩或 `Esc` 退出。
 - 通过论文图和原页切换核对结论；在原文页点击“中文对照”，显示与所选页码对应的译文与译注。
 - 顶栏“讲稿”打开右侧讲稿栏，显示当前章节提示；点击栏内关闭按钮返回。小屏幕上讲稿栏覆盖在正文之上。
+
+数值区使用确定性的合成信号和示例权重：卷积逐项乘加、位置向量相加、一个 64 维注意力头的查询（涵盖全部可见 Token）、独立 FFN 子层、均值池化、线性头及遮挡 MSE 都可复算。它没有已训练模型权重，也未执行完整 12 层网络；层选择仅放大同构架构，不改变算例。解码器 384→192 的衔接和 4 点输出在页面上标为形状推导。时间／整通道遮挡在离散网格上取整，并显示实际比例；论文报告比例为 65%。
+
+“深入理解”、自查题参考答案与思考题要点均直接展示，无需逐项选择或展开。
 
 ## 动画工具
 
