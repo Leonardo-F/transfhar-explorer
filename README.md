@@ -121,4 +121,4 @@ transfhar-explorer/
 
 Aidan Bradshaw, Riku Arakawa, Xin Liu, Karan Ahuja. *TransfHAR: Self-Supervised Wrist Representations for On-Demand Activity Recognition*. arXiv:2608.15861v2, 2026. DOI: [10.1145/3830398.3830553](https://doi.org/10.1145/3830398.3830553). [论文原文](https://arxiv.org/abs/2608.15861)。论文及其图像遵循 CC BY 4.0，使用时应保留作者和许可信息。
 
-Three.js 和 KaTeX 各自的许可见 `vendor/` 目录。本项目教学代码目前未单独声明开源许可证；第三方内容仍受各自许可约束。
+本项目原创代码采用 [MIT 许可证](LICENSE)。论文及其图像、引用材料，以及 `vendor/` 中的 Three.js 和 KaTeX 等第三方内容仍遵循各自的许可；离线 HTML 包含这些第三方内容，使用或再分发时须同时遵守其相应许可。
