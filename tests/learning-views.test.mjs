@@ -56,32 +56,42 @@ await test('translation follows the selected page and hides for a figure',async(
  ctx.show('figure','fig4',false);assert.equal(nodes['#paperTranslation'].hidden,true);assert.equal(nodes['#translationToggle'].hidden,true);
  ctx.show('page',9,false);assert.equal(nodes['#paperTranslation'].hidden,false);assert.match(nodes['#paperTranslation'].innerHTML,/86\.7/);
 });
-await test('explanatory neural storyboard distinguishes training and inference',async()=>{
- const file=new URL('../neural-flow.mjs',import.meta.url);
- assert.ok(existsSync(file),'missing animated neural network module');
- const {getNeuralModel,renderNeuralDiagram}=await import(file);
- const train=getNeuralModel({axes:3,mode:'pretrain',step:3});
- const inference=getNeuralModel({axes:6,mode:'inference',step:3});
+await test('architecture distinguishes training and inference branches',async()=>{
+ const {getNeuralModel,renderNeuralDiagram}=await import('../neural-flow.mjs');
+ const train=getNeuralModel({axes:3,mode:'pretrain',step:9});
+ const inference=getNeuralModel({axes:6,mode:'inference',step:7});
  assert.equal(train.tokenCount,96);assert.equal(inference.tokenCount,192);
- assert.match(train.description,/解码|遮挡/);assert.match(inference.description,/池化/);
- const svg=renderNeuralDiagram(inference);
- assert.match(svg,/<svg/);assert.match(svg,/animateMotion/);assert.match(svg,/12 层/);
- assert.match(svg,/384/);assert.match(svg,/示意/);
- const masked=renderNeuralDiagram(train);
- assert.equal((masked.match(/data-nn-masked/g)||[]).length,4);
- assert.equal((svg.match(/data-nn-masked/g)||[]).length,0);
+ assert.match(train.description,/4 层|192 维/);assert.match(inference.description,/平均/);
+ assert.match(renderNeuralDiagram(train),/Decoder 4/);
+ assert.match(renderNeuralDiagram(inference),/192 个/);
+ const encoder=renderNeuralDiagram({mode:'inference',step:4});
+ assert.match(encoder,/LayerNorm/);assert.match(encoder,/Block 12/);
+ assert.match(encoder,/1536/);assert.match(encoder,/animateMotion/);
+});
+await test('all deep-dive and self-check answers are directly visible',()=>{
+ const course=JSON.parse(readFileSync(new URL('../course.json',import.meta.url),'utf8'));
+ const ctx={h:String};
+ for(const name of ['deepDive','details']){const line=app.split('\n').find(x=>x.startsWith('function '+name+'('));runInNewContext(line+'\nthis.'+name+'='+name,ctx)}
+ for(const l of course.lessons){
+  const deep=ctx.deepDive(l),answers=ctx.details(l);
+  assert.doesNotMatch(deep,/<details|<summary|hidden/);
+  assert.equal((deep.match(/class="deep-answer"/g)||[]).length,l.deepDive?.length||0);
+  assert.doesNotMatch(answers,/<details|<summary|data-answer|hidden/);
+  assert.ok(answers.includes(l.questions[0].explanation));
+  assert.ok(answers.includes(l.questions[0].options[l.questions[0].answer]));
+ }
 });
 await test('neural storyboard controls change state and stop playback when hidden',async()=>{
  const {makeNeuralView}=await import('../neural-flow.mjs');
  const updates=[];let handler,paused=0,unpaused=0;
  const svg={pauseAnimations(){paused++},unpauseAnimations(){unpaused++}};
- const root={innerHTML:'',querySelector:s=>s==='svg'?svg:null,contains:()=>true,addEventListener:(name,fn)=>{handler=fn},removeEventListener:()=>{handler=null}};
+ const root={innerHTML:'',querySelector:s=>s==='svg'?svg:null,contains:()=>true,addEventListener:(name,fn)=>{if(name==='click')handler=fn},removeEventListener:()=>{handler=null}};
  const view=makeNeuralView(root,{axes:6,mode:'inference',onChange:v=>updates.push(v)});
  view.setVisible(true);assert.ok(unpaused>0);
  const press=(attr,value)=>handler({target:{closest:()=>({dataset:{['nn'+attr[0].toUpperCase()+attr.slice(1)]:value},hasAttribute:n=>n==='data-nn-'+attr})}});
- press('mode','pretrain');assert.equal(updates.at(-1).mode,'pretrain');assert.match(root.innerHTML,/插回 · 解码/);
- press('axes','3');assert.equal(updates.at(-1).axes,3);assert.match(root.innerHTML,/96 token/);
- press('step','3');assert.match(root.innerHTML,/192 维解码器/);
+ press('mode','pretrain');assert.equal(updates.at(-1).mode,'pretrain');assert.match(root.innerHTML,/补回 mask token/);
+ press('axes','3');assert.equal(updates.at(-1).axes,3);assert.match(root.innerHTML,/96 个 Token/);
+ press('step','9');assert.match(root.innerHTML,/192 维、4 头、4 层/);
  view.setVisible(false);assert.ok(paused>0);view.destroy();assert.equal(handler,null);
 });
 await test('playing storyboard advances through the teaching steps and stops offscreen',async()=>{
@@ -103,7 +113,7 @@ await test('keyboard focus is retained when storyboard controls redraw',async()=
  global.document={activeElement:old};
  try{
   const svg={pauseAnimations(){},unpauseAnimations(){}};
-  const root={innerHTML:'',contains:()=>true,querySelector:s=>s==='svg'?svg:{focus(){focused=s}},addEventListener:(n,fn)=>{handler=fn},removeEventListener(){}};
+  const root={innerHTML:'',contains:()=>true,querySelector:s=>s==='svg'?svg:{focus(){focused=s}},addEventListener:(n,fn)=>{if(n==='click')handler=fn},removeEventListener(){}};
   const view=makeNeuralView(root,{onChange(){}});
   focused='';
   handler({target:{closest:()=>old}});
