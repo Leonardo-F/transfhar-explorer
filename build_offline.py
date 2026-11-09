@@ -28,6 +28,10 @@ view=(root/'three-view.js').read_text('utf8').replace("import * as THREE from '.
 pipeline=(root/'pipeline-view.js').read_text('utf8').replace('export const PIPELINE_STEPS','const PIPELINE_STEPS').replace('export function pipelineMask','function pipelineMask').replace('export function visibleIndex','function visibleIndex').replace('export function makePipelineView','function makePipelineView')
 app=(root/'app.js').read_text('utf8').replace("loadThreeView().then(","Promise.resolve({makeThreeView,makeTokenView}).then(").replace("const loadThreeView=()=>import('./three-view.js');",'').replace("import {makePipelineView} from './pipeline-view.js';",'').replace("import {describeToken,networkShapes} from './token-state.mjs';",'')
 tokenstate=(root/'token-state.mjs').read_text('utf8').replace('export function ','function ')
+translation=(root/'paper-zh.mjs').read_text('utf8').replace('export const paperTranslations','const paperTranslations').replace('export function getPaperTranslation','function getPaperTranslation')
+neural=(root/'neural-flow.mjs').read_text('utf8').replace('export function ','function ')
+app=app.replace("import {makeNeuralView} from './neural-flow.mjs';",'')
+app=app.replace("import {getPaperTranslation} from './paper-zh.mjs';",'')
 for before,after in [
  ("function inlineSourceUrl(kind,id){return kind==='figure'?`assets/${id}.webp`:`assets/pages/page-${String(id).padStart(2,'0')}.webp`}", "function inlineSourceUrl(kind,id){return kind==='figure'?assetURLs[id]:assetURLs['page-'+String(id).padStart(2,'0')] }"),
  ('src="assets/fig1.webp"','src="${assetURLs.fig1}"'),
@@ -43,7 +47,7 @@ for i in range(1,9):
 for i in range(1,17):
  assets[f'page-{i:02}']=data_url(root/'assets'/'pages'/f'page-{i:02}.webp','image/webp')
 course=(root/'course.json').read_text('utf8')
-code='(function(){\n'+lib+'\nconst assetURLs=JSON.parse(document.getElementById("embeddedAssets").textContent);\n'+view+'\n'+pipeline+'\n'+tokenstate+'\n'+app+'\n})();'
+code='(function(){\n'+lib+'\nconst assetURLs=JSON.parse(document.getElementById("embeddedAssets").textContent);\n'+view+'\n'+pipeline+'\n'+tokenstate+'\n'+translation+'\n'+neural+'\n'+app+'\n})();'
 for label,x in [('code',code),('katex',katex),('course',course)]: assert '</script' not in x.lower(),label
 assert '</style' not in css.lower()
 html=html.replace('<link rel="stylesheet" href="./vendor/katex-embedded.lean.css">\n  <link rel="stylesheet" href="./style.css">','<style>\n'+css+'\n</style>')
