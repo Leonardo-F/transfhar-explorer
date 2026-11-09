@@ -36,8 +36,8 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
  let state={axes:6,mode:'random',stage:'mask',spread:1,phase:'masked',focusStep:0,row:0,col:0};
  const REDUCE_MOTION=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  let tokenMeshes=[],tempGeos=[],particles=[],selectedRef=null,raycaster,mouse;
- const HOME={x:-.3,y:.5};
- const axisColors=[0xe69d75,0xe6c574,0xdb9c83,0x71bdb0,0xa4cfc1,0x8bb9a5];
+ const HOME={x:-.42,y:.62};
+ const axisColors=[0xc98a5e,0xd9b380,0xc99a72,0x8aa9a0,0xa8bcb2,0x8aa9a0];
  const hash=n=>{let x=Math.imul(n+1,2654435761);x=Math.imul(x^(x>>>16),2246822519);x=Math.imul(x^(x>>>13),3266489917);return (x^(x>>>16))>>>0};
  function maskData(){
   const {axes,mode}=state,total=axes*32;
@@ -74,34 +74,34 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
  geo.poolEdge=new THREE.EdgesGeometry(geo.pool);geo.headEdge=new THREE.EdgesGeometry(geo.head);
  geo.sel=new THREE.EdgesGeometry(new THREE.BoxGeometry(.11,1.08,.36));
  const mat={
-  ghost:new THREE.MeshBasicMaterial({color:0x8d937f,transparent:true,opacity:.34}),
-  ghostEdge:new THREE.LineBasicMaterial({color:0xa8ae97,transparent:true,opacity:.5}),
-  maskTok:new THREE.MeshBasicMaterial({color:0x8fc3dd,transparent:true,opacity:.85}),
+  ghost:new THREE.MeshBasicMaterial({color:0x918b81,transparent:true,opacity:.34}),
+  ghostEdge:new THREE.LineBasicMaterial({color:0xaca599,transparent:true,opacity:.5}),
+  maskTok:new THREE.MeshBasicMaterial({color:0xd6b896,transparent:true,opacity:.85}),
   loss:new THREE.MeshBasicMaterial({color:0xe69a5d,transparent:true,opacity:.95}),
   lossEdge:new THREE.LineBasicMaterial({color:0xffb27d,transparent:true,opacity:.8}),
-  panelEdge:new THREE.LineBasicMaterial({color:0x6fae8d,transparent:true,opacity:.5}),
-  dec:new THREE.MeshBasicMaterial({color:0x7fb6cf,transparent:true,opacity:.14}),
-  decEdge:new THREE.LineBasicMaterial({color:0x8fc3dd,transparent:true,opacity:.5}),
+  panelEdge:new THREE.LineBasicMaterial({color:0xa89575,transparent:true,opacity:.5}),
+  dec:new THREE.MeshBasicMaterial({color:0xc8a986,transparent:true,opacity:.14}),
+  decEdge:new THREE.LineBasicMaterial({color:0xd6b896,transparent:true,opacity:.5}),
   seq:new THREE.MeshBasicMaterial({color:0xd8d9c2,transparent:true,opacity:.12}),
-  pool:new THREE.MeshBasicMaterial({color:0x9fd69a,transparent:true,opacity:.95}),
-  poolEdge:new THREE.LineBasicMaterial({color:0xc4e8bd,transparent:true,opacity:.8}),
+  pool:new THREE.MeshBasicMaterial({color:0xc9b088,transparent:true,opacity:.95}),
+  poolEdge:new THREE.LineBasicMaterial({color:0xe4d7c1,transparent:true,opacity:.8}),
   head:new THREE.MeshBasicMaterial({color:0xd9a37e,transparent:true,opacity:.9}),
-  out:new THREE.MeshBasicMaterial({color:0xbce87e,transparent:true,opacity:.9}),
-  flow:new THREE.LineBasicMaterial({color:0x86b99b,transparent:true,opacity:.38}),
-  flowDec:new THREE.LineBasicMaterial({color:0x8fc3dd,transparent:true,opacity:.42}),
-  poolLine:new THREE.LineBasicMaterial({color:0xa9d8a2,transparent:true,opacity:.5}),
+  out:new THREE.MeshBasicMaterial({color:0xd6b98c,transparent:true,opacity:.9}),
+  flow:new THREE.LineBasicMaterial({color:0xb4a58b,transparent:true,opacity:.38}),
+  flowDec:new THREE.LineBasicMaterial({color:0xd6b896,transparent:true,opacity:.42}),
+  poolLine:new THREE.LineBasicMaterial({color:0xd3c3a7,transparent:true,opacity:.5}),
   headLine:new THREE.LineBasicMaterial({color:0xd9b48f,transparent:true,opacity:.55}),
   sel:new THREE.MeshBasicMaterial({color:0xe08a5e}),
   selEdge:new THREE.LineBasicMaterial({color:0xffd9c0}),
-  groundA:new THREE.MeshBasicMaterial({color:0x27503e,transparent:true,opacity:.9}),
-  groundR:new THREE.MeshBasicMaterial({color:0x2a4a56,transparent:true,opacity:.7}),
-  lane:new THREE.LineBasicMaterial({color:0x3f7159,transparent:true,opacity:.55})
+  groundA:new THREE.MeshBasicMaterial({color:0x4a4034,transparent:true,opacity:.9}),
+  groundR:new THREE.MeshBasicMaterial({color:0x52452e,transparent:true,opacity:.7}),
+  lane:new THREE.LineBasicMaterial({color:0x6c5d44,transparent:true,opacity:.55})
  };
  const axisA=axisColors.map(c=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:1}));
  const axisR=axisColors.map(c=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.22}));
  const axisDot=axisColors.map(c=>new THREE.MeshBasicMaterial({color:c}));
- const panelMats=Array.from({length:12},()=>new THREE.MeshBasicMaterial({color:0x7fae94,transparent:true,opacity:.14}));
- const attenMats=[0,1,2].map(()=>new THREE.LineBasicMaterial({color:0xd7e8c8,transparent:true,opacity:.3}));
+ const panelMats=Array.from({length:12},()=>new THREE.MeshBasicMaterial({color:0xa89478,transparent:true,opacity:.14}));
+ const attenMats=[0,1,2].map(()=>new THREE.LineBasicMaterial({color:0xe5dbcb,transparent:true,opacity:.3}));
  // Layout: zone A token grid (x -5.55..-3), zone C 12-layer encoder tunnel, then decoder/rebuild or pool/head.
  function colX(c){return -5.55+c*.083}
  function rowZ(r){return (r-(state.axes-1)/2)*.56}
@@ -250,6 +250,7 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
   if(REDUCE_MOTION){renderer.render(scene,camera);return}
   frame=requestAnimationFrame(animate);
   if(document.hidden||canvas.offsetParent===null){last=performance.now();return}
+  if(!drag&&!moved)root.rotation.y+=.0016;
   const now=performance.now(),t=now/1000;last=now;
   const step=state.focusStep;
   if(step>=2){const active=Math.floor(t*2.4)%12;for(let i=0;i<12;i++)panelMats[i].opacity=i===active?.52:.18}
@@ -269,7 +270,7 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
  function makeFallback(){
   canvas=originalCanvas.cloneNode(false);originalCanvas.replaceWith(canvas);ctx=canvas.getContext('2d');if(!ctx){onInfo({failed:true});return {update(){},resize(){},zoomIn(){},zoomOut(){},resetView(){},destroy(){}}}
   let zoom=1,yaw=.35,pitch=-.25,viewW=1,viewH=1;const zoomControl=makeZoomController(canvas,z=>{zoom=z;draw()},onZoom);
-  const CSS={axis:['#e69d75','#e6c574','#db9c83','#71bdb0','#a4cfc1','#8bb9a5'],ghost:'#8d937f',ghostEdge:'#a8ae97',mask:'#8fc3dd',loss:'#e69a5d',panel:'#7fae94',panelEdge:'#6fae8d',dec:'#7fb6cf',seq:'#d8d9c2',pool:'#9fd69a',head:'#d9a37e',out:'#bce87e',flow:'#86b99b',sel:'#e08a5e',ground:'#27503e',groundR:'#2a4a56',line:'#9eaa99'};
+  const CSS={axis:['#c98a5e','#d9b380','#c99a72','#8aa9a0','#a8bcb2','#8aa9a0'],ghost:'#918b81',ghostEdge:'#aca599',mask:'#d6b896',loss:'#e69a5d',panel:'#a89478',panelEdge:'#a89575',dec:'#c8a986',seq:'#d8d9c2',pool:'#c9b088',head:'#d9a37e',out:'#d6b98c',flow:'#b4a58b',sel:'#e08a5e',ground:'#4a4034',groundR:'#52452e',line:'#a8a39b'};
   function project(x,y,z){const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch),a=x*cy+z*sy,c=-x*sy+z*cy,b=y*cp-c*sp,scale=Math.min(viewW/13,viewH/5)*zoom;return [viewW*.5+a*scale,viewH*.5+(1.3-b)*scale]}
   function poly(points,color,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=color;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke()}}
   function quad(x,y,z,w,h,color,stroke){const s=project(x,y,z);return [[s[0]-w*40,s[1]],[s[0]+w*40,s[1]],[s[0]+w*40,s[1]-h*40],[s[0]-w*40,s[1]-h*40]]}
@@ -286,19 +287,19 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
     poly(points,sel?CSS.sel:isMask?CSS.ghost:CSS.axis[r2],sel?CSS.sel:(isMask?CSS.ghostEdge:null));hits.push({row:r2,col:c,points});
    }
    // encoder tunnel
-   for(let i=0;i<12;i++){const x=xC(i),a=project(x,0,-1),b=project(x,2.7,1);ctx.strokeStyle=step>=2?CSS.panelEdge:'#54755f';ctx.lineWidth=step>=2?1.4:1;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
+   for(let i=0;i<12;i++){const x=xC(i),a=project(x,0,-1),b=project(x,2.7,1);ctx.strokeStyle=step>=2?CSS.panelEdge:'#726857';ctx.lineWidth=step>=2?1.4:1;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
    // sequence bar
    if(step>=2){const a=project(xC(0),1.35,0),b=project(xC(11),1.35,0);ctx.strokeStyle=CSS.seq;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
     // converging flow (sampled)
     ctx.strokeStyle=CSS.flow;ctx.lineWidth=.8;for(let r2=0;r2<axes;r2++)for(let c=0;c<32;c+=4){if(train&&hidden.has(r2*32+c))continue;const s=project(colX(c),1.02,rowZ(r2)),e=project(xC(0)-.28,1.35,rowZ(r2)*.18);ctx.beginPath();ctx.moveTo(s[0],s[1]);ctx.lineTo(e[0],e[1]);ctx.stroke()}}
    if(train){
-    for(let i=0;i<4;i++){const x=xD(i),a=project(x,0,-.75),b=project(x,1.7,.75);ctx.strokeStyle=step>=3?CSS.dec:'#557585';ctx.lineWidth=step>=3?1.6:1;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
+    for(let i=0;i<4;i++){const x=xD(i),a=project(x,0,-.75),b=project(x,1.7,.75);ctx.strokeStyle=step>=3?CSS.dec:'#816e59';ctx.lineWidth=step>=3?1.6:1;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
     if(step>=3)for(let r2=0;r2<axes;r2++)for(let c=0;c<32;c++){
      const idx=r2*32+c;if(!hidden.has(idx))continue;const x=xR(c),z=zR(r2),s=project(x,0,z);
      ctx.fillStyle=step>=4?CSS.loss:CSS.mask;ctx.fillRect(s[0]-2,s[1]-6,4,6);
     }
    }else{
-    if(step>=3){const s=project(2.35,0,0),t=project(2.35,2.6,0);ctx.fillStyle=CSS.pool;ctx.fillRect(s[0]-7,t[1],14,s[1]-t[1]);ctx.strokeStyle='#c4e8bd';ctx.strokeRect(s[0]-7,t[1],14,s[1]-t[1]);
+    if(step>=3){const s=project(2.35,0,0),t=project(2.35,2.6,0);ctx.fillStyle=CSS.pool;ctx.fillRect(s[0]-7,t[1],14,s[1]-t[1]);ctx.strokeStyle='#e4d7c1';ctx.strokeRect(s[0]-7,t[1],14,s[1]-t[1]);
      ctx.strokeStyle=CSS.flow;ctx.lineWidth=.8;for(let j=0;j<10;j++){const a=project(1.55,1.1+j*.06,((j%3)-1)*.3),b=project(2.2,2.45,0);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}
     if(step>=4){const s=project(3.15,0,0),t=project(3.15,2.3,0);ctx.fillStyle=CSS.head;ctx.fillRect(s[0]-4,t[1],8,s[1]-t[1]);
      for(let j=0;j<7;j++){const o=project(3.8,.32+j*.33,0);ctx.fillStyle=CSS.out;ctx.fillRect(o[0]-4,o[1]-5,8,8);const a=project(3.2,1.3,0),b=project(3.72,.32+j*.33,0);ctx.strokeStyle=CSS.line;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}
@@ -317,7 +318,7 @@ export function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
 export function makeTokenView(originalCanvas,onZoom=()=>{}){
  let canvas=originalCanvas,renderer,scene,camera,root,frame,ctx,drag=false,moved=false,lastX=0,lastY=0,yaw=.18,pitch=-.16;
  let state={step:0,axis:0,patch:0,dim:1,masked:false,mode:'inference'};
- const palette={input:0xe49e76,kernel:0xeab38d,token:0x81b9a2,time:0xe8c46e,axis:0x8dbdb4,result:0x4d8c70,masked:0xc8c9bd,chosen:0xc45d40,encoder:0x97c4b1,line:0x9eaa99};
+ const palette={input:0xe49e76,kernel:0xeab38d,token:0xb4a386,time:0xe8c46e,axis:0xb9aa91,result:0x867353,masked:0xc8c9bd,chosen:0xc45d40,encoder:0xc0b29b,line:0xa8a39b};
  let materials={},unit,lineMaterial,lineGeometries=[];
  function layout(){
   const blocks=[],links=[],selected=Math.min(23,Math.floor((state.dim-1)/16));
@@ -338,7 +339,7 @@ export function makeTokenView(originalCanvas,onZoom=()=>{}){
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(35,1,.1,100);camera.position.set(0,.4,15.8);camera.lookAt(new THREE.Vector3(0,0,0));root=new THREE.Group();root.rotation.set(-.18,.24,.01);scene.add(root);
  unit=new THREE.BoxGeometry(1,1,1);for(const [k,color] of Object.entries(palette))materials[k]=new THREE.MeshBasicMaterial({color});lineMaterial=new THREE.LineBasicMaterial({color:palette.line,transparent:true,opacity:.85});
  function fit(){fitCamera(camera,{minX:-4.9,maxX:4.9,height:4.4,margin:1.12,lift:.04})}
- function draw(){while(root.children.length)root.remove(root.children[0]);lineGeometries.forEach(x=>x.dispose());lineGeometries=[];materials.input.color.setHex([0xe69d75,0xe6c574,0xdb9c83,0x71bdb0,0xa4cfc1,0x8bb9a5][state.axis]);const {blocks,links}=layout();for(const b of blocks){const mesh=new THREE.Mesh(unit,materials[b.color]);mesh.position.set(b.x,b.y,0);mesh.scale.set(b.w,b.h,.2);root.add(mesh)}for(const [a,b] of links){const g=new THREE.Geometry();g.vertices.push(new THREE.Vector3(a,0,0),new THREE.Vector3(b,0,0));lineGeometries.push(g);root.add(new THREE.Line(g,lineMaterial))}fit();renderer.render(scene,camera)}
+ function draw(){while(root.children.length)root.remove(root.children[0]);lineGeometries.forEach(x=>x.dispose());lineGeometries=[];materials.input.color.setHex([0xc98a5e,0xd9b380,0xc99a72,0x8aa9a0,0xa8bcb2,0x8aa9a0][state.axis]);const {blocks,links}=layout();for(const b of blocks){const mesh=new THREE.Mesh(unit,materials[b.color]);mesh.position.set(b.x,b.y,0);mesh.scale.set(b.w,b.h,.2);root.add(mesh)}for(const [a,b] of links){const g=new THREE.Geometry();g.vertices.push(new THREE.Vector3(a,0,0),new THREE.Vector3(b,0,0));lineGeometries.push(g);root.add(new THREE.Line(g,lineMaterial))}fit();renderer.render(scene,camera)}
  function resize(){const r=canvas.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=Math.max(.1,r.width/r.height);fit();renderer.render(scene,camera)}
  function render(){renderer.render(scene,camera)}
  const zoomControl=makeZoomController(canvas,z=>{camera.zoom=z;camera.updateProjectionMatrix();renderer.render(scene,camera)},onZoom);
@@ -350,8 +351,8 @@ export function makeTokenView(originalCanvas,onZoom=()=>{}){
  function fallback(){
   canvas=originalCanvas.cloneNode(false);originalCanvas.replaceWith(canvas);ctx=canvas.getContext('2d');if(!ctx)return {fallback:true,update(){},resize(){},zoomIn(){},zoomOut(){},resetView(){},destroy(){}};
   let zoom=1;const zoomControl=makeZoomController(canvas,z=>{zoom=z;draw2d()},onZoom);
-  const colors={input:'#e49e76',kernel:'#eab38d',token:'#81b9a2',time:'#e8c46e',axis:'#8dbdb4',result:'#4d8c70',masked:'#c8c9bd',chosen:'#c45d40',encoder:'#97c4b1',line:'#9eaa99'};
-  function draw2d(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),w=Math.max(10,r.width),h=Math.max(10,r.height);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);colors.input=['#e69d75','#e6c574','#db9c83','#71bdb0','#a4cfc1','#8bb9a5'][state.axis];const {blocks,links}=layout(),scale=Math.min(w/10.5,h/5)*zoom,cx=w*.52,cy=h*.52;for(const [a,b] of links){ctx.strokeStyle=colors.line;ctx.beginPath();ctx.moveTo(cx+a*scale,cy);ctx.lineTo(cx+b*scale,cy);ctx.stroke()}for(const q of blocks){ctx.fillStyle=colors[q.color];ctx.fillRect(cx+(q.x-q.w/2)*scale,cy-(q.y+q.h/2)*scale,q.w*scale,q.h*scale)}}
+  const colors={input:'#e49e76',kernel:'#eab38d',token:'#b4a386',time:'#e8c46e',axis:'#b9aa91',result:'#867353',masked:'#c8c9bd',chosen:'#c45d40',encoder:'#c0b29b',line:'#a8a39b'};
+  function draw2d(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),w=Math.max(10,r.width),h=Math.max(10,r.height);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);colors.input=['#c98a5e','#d9b380','#c99a72','#8aa9a0','#a8bcb2','#8aa9a0'][state.axis];const {blocks,links}=layout(),scale=Math.min(w/10.5,h/5)*zoom,cx=w*.52,cy=h*.52;for(const [a,b] of links){ctx.strokeStyle=colors.line;ctx.beginPath();ctx.moveTo(cx+a*scale,cy);ctx.lineTo(cx+b*scale,cy);ctx.stroke()}for(const q of blocks){ctx.fillStyle=colors[q.color];ctx.fillRect(cx+(q.x-q.w/2)*scale,cy-(q.y+q.h/2)*scale,q.w*scale,q.h*scale)}}
   window.addEventListener('resize',draw2d);draw2d();return {fallback:true,update(config){Object.assign(state,config);draw2d()},resize:draw2d,zoomIn(){zoomControl.in()},zoomOut(){zoomControl.out()},resetView(){zoomControl.reset()},destroy(){zoomControl.destroy();window.removeEventListener('resize',draw2d)}};
  }
 }
