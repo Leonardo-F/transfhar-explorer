@@ -68,17 +68,18 @@ await test('architecture distinguishes training and inference branches',async()=
  assert.match(encoder,/LayerNorm/);assert.match(encoder,/Block 12/);
  assert.match(encoder,/1536/);assert.match(encoder,/animateMotion/);
 });
-await test('all deep-dive and self-check answers are directly visible',()=>{
+await test('reading notes combine explanations and direct answers',()=>{
  const course=JSON.parse(readFileSync(new URL('../course.json',import.meta.url),'utf8'));
  const ctx={h:String};
- for(const name of ['deepDive','details']){const line=app.split('\n').find(x=>x.startsWith('function '+name+'('));runInNewContext(line+'\nthis.'+name+'='+name,ctx)}
+ const line=app.split('\n').find(x=>x.startsWith('function deepDive('));
+ runInNewContext(line+'\nthis.deepDive=deepDive',ctx);
  for(const l of course.lessons){
-  const deep=ctx.deepDive(l),answers=ctx.details(l);
-  assert.doesNotMatch(deep,/<details|<summary|hidden/);
-  assert.equal((deep.match(/class="deep-answer"/g)||[]).length,l.deepDive?.length||0);
-  assert.doesNotMatch(answers,/<details|<summary|data-answer|hidden/);
-  assert.ok(answers.includes(l.questions[0].explanation));
-  assert.ok(answers.includes(l.questions[0].options[l.questions[0].answer]));
+  const notes=ctx.deepDive(l);
+  assert.match(notes,/<details class="deep-section reading-notes">/);
+  assert.ok(notes.includes(l.questions[0].explanation));
+  assert.ok(notes.includes(l.questions[0].options[l.questions[0].answer]));
+  assert.ok(notes.includes(l.reflection.prompt));
+  assert.doesNotMatch(notes,/参考答案：|自查问题与答案/);
  }
 });
 await test('neural storyboard controls change state and stop playback when hidden',async()=>{

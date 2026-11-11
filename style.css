@@ -229,3 +229,5 @@ body.reading-translation .work-grid:not(.network-work-grid){grid-template-column
 @media(max-width:700px){.nn-root{padding:14px}.nn-heading{flex-direction:column}.nn-heading h2{font-size:18px}.nn-stage-list button{flex-basis:66px;padding:7px}.nn-trace-header{align-items:start;flex-direction:column}.nn-nav{flex-wrap:wrap}.nn-nav>span{flex-basis:100%;order:2}.answer-section{padding:17px}.nn-svg{min-width:850px}}
 @media(max-width:1150px){body.notes-open .inline-paper-grid.show-translation{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){.nn-signals{visibility:hidden}}
+
+.reading-notes summary{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;list-style:none}.reading-notes summary::-webkit-details-marker{display:none}.reading-notes summary strong{display:block;font-size:17px;margin-top:5px}.reading-hint{color:var(--muted);font-size:12px;white-space:nowrap}.reading-notes[open] .reading-hint{font-size:0}.reading-notes[open] .reading-hint::after{content:"收起";font-size:12px}.reading-notes .deep-list{margin-top:18px}.reading-notes li{font-size:13px;line-height:1.8;color:var(--ink2)}
