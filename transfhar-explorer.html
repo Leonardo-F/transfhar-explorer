@@ -1291,7 +1291,7 @@ SOFTWARE.
           "读出full split的绝对平衡准确率。",
           "区分公开基线与同架构控制。"
         ],
-        "notes": "作者使用三个未参与预训练的下游任务检验迁移。完整训练划分下，六轴冻结编码器加线性探针在 SAMoSA 上的平衡准确率为64.9%，公开监督基线为56.8%；PrISM 制作拿铁任务为36.5%对31.0%；UTD-MHAD 为69.1%对64.1%。差异分别为8.1、5.5和5.0个百分点，平均为6.2个百分点。\n\n公开基线的模型和输入并不完全相同，部分基线使用九轴数据。因此作者还比较了相同六轴架构下的从头训练、预训练后微调和冻结探针。这些结果支持预训练表示在所测试设置中的价值，但不能推出冻结探针对所有任务都最优。\n\n平衡准确率是各类别召回率的平均。不同窗口长度的比较显示，两个 L3 数据集在2.56秒窗口下表现最高，而 PrISM 拿铁任务在5.12秒窗口下表现最高，说明时间上下文的作用需要结合具体任务判断。",
+        "notes": "作者使用三个未参与预训练的下游任务检验迁移。完整训练划分下，六轴冻结编码器加线性探针在 SAMoSA 上的平衡准确率为64.9%，公开监督基线为56.8%；PrISM 制作拿铁任务为36.5%对31.0%；UTD-MHAD 为69.1%对64.1%。差异分别为8.1、5.5和5.0个百分点，平均为6.2个百分点。\n\n这里的公开监督基线是对应数据集既有研究中的全监督运动识别模型，使用带标签数据训练，并不特指传统机器学习方法。TransfHAR 的下游线性探针同样使用标签，差别在于前面有自监督预训练且编码器冻结。公开基线的模型和输入并不完全相同，部分基线使用九轴数据。因此作者还比较了相同六轴架构下的从头训练、预训练后微调和冻结探针。这些结果支持预训练表示在所测试设置中的价值，但不能推出冻结探针对所有任务都最优。\n\n平衡准确率是各类别召回率的平均。不同窗口长度的比较显示，两个 L3 数据集在2.56秒窗口下表现最高，而 PrISM 拿铁任务在5.12秒窗口下表现最高，说明时间上下文的作用需要结合具体任务判断。",
         "demoCue": "切换两类对照，然后看表4窗口长度消融和论文图6。"
       },
       "visual": "offline",
@@ -1306,6 +1306,10 @@ SOFTWARE.
         {
           "title": "为什么要保留下游数据集",
           "text": "若评估数据在预训练中出现，即使没有标签也会影响对跨数据集迁移的解释。作者把SAMoSA、PrISM和UTD-MHAD作为保留的下游任务。"
+        },
+        {
+          "title": "“公开监督基线”具体指什么？",
+          "text": "这里指三个目标数据集各自已有工作的全监督运动识别模型，使用目标数据集的带标签训练数据；它是训练方式和对照来源的描述，不特指随机森林等传统机器学习。论文对SAMoSA和PrISM使用对应研究的motion-only模型及其评估协议，对UTD-MHAD使用Yang等人发表的惯性基线。SAMoSA和PrISM基线为9轴，UTD-MHAD基线为6轴；架构与输入不完全相同。TransfHAR虽然自监督预训练不使用活动标签，但下游线性探针也用有标签数据训练。完整划分比较和K-shot比较的标注量不同，不能混为一谈。"
         },
         {
           "title": "比较哪一个更公平",
@@ -5486,7 +5490,7 @@ function probe(){return `<div class="card visual-card">${cardHead('FROZEN ENCODE
 const dataPublished=[{name:'SAMoSA',values:[56.8,64.9],extra:'27 类 · L3'},{name:'PrISM latte',values:[31,36.5],extra:'19 步 · L4'},{name:'UTD-MHAD',values:[64.1,69.1],extra:'21 类 · L3'}];
 const dataMatched=[{name:'SAMoSA',values:[28.8,61.4,64.9],extra:'表 3'},{name:'PrISM latte',values:[16.2,34.4,36.5],extra:'表 3'},{name:'UTD-MHAD',values:[46.4,65.4,69.1],extra:'表 3'}];
 function comparisonRows(){let data=graph==='published'?dataPublished:dataMatched,labels=graph==='published'?['公开监督基线','冻结 + 探针']:['从头训练','预训练 + 微调','冻结 + 探针'];return data.map(d=>`<div><div class="group-label">${h(d.name)} <span>${h(d.extra)}</span></div><div class="dual-bars">${d.values.map((v,i)=>{let cls=graph==='published'?(i===1?'ours':''):(i===0?'scratch':i===1?'fine':'ours');return `<div class="metric-row"><span>${labels[i]}</span><div class="metric-bar"><div class="metric-fill ${cls}" style="width:${v}%"></div></div><span class="metric-value">${fmt(v)}%</span></div>`}).join('')}</div></div>`).join('')}
-function offline(){return `<div class="card visual-card">${cardHead('AUTHOR-REPORTED RESULTS','三个保留数据集的迁移结果','完整训练划分 · 平衡准确率（越高越好）','图 6 / 表 3')}<div class="visual-body"><div class="segment" id="graphPicker"><button data-graph="published" class="${graph==='published'?'active':''}">公开监督基线</button><button data-graph="matched" class="${graph==='matched'?'active':''}">同架构对照</button></div><div class="chart-wrap" id="comparisonChart">${comparisonRows()}</div><div class="chart-key" id="graphNote">${graph==='published'?'SAMoSA / PrISM 基线使用9轴；UTD基线使用6轴。不同模型及输入应谨慎比较。':'全部使用相同6轴 ViT-1D；图示为论文表3的均值。'}</div><div class="taxonomy-footer"><span class="shape-label">数值为作者报告，并非本网页复现</span>${figBtn('fig6')}</div></div></div>`}
+function offline(){return `<div class="card visual-card">${cardHead('AUTHOR-REPORTED RESULTS','三个保留数据集的迁移结果','完整训练划分 · 平衡准确率（越高越好）','图 6 / 表 3')}<div class="visual-body"><div class="segment" id="graphPicker"><button data-graph="published" class="${graph==='published'?'active':''}">公开监督基线</button><button data-graph="matched" class="${graph==='matched'?'active':''}">同架构对照</button></div><div class="chart-wrap" id="comparisonChart">${comparisonRows()}</div><div class="chart-key" id="graphNote">${graph==='published'?'公开监督基线是各数据集既有的全监督运动模型，并非专指传统机器学习；SAMoSA / PrISM 为9轴，UTD为6轴。模型与输入不同，比较需谨慎。':'全部使用相同6轴 ViT-1D；图示为论文表3的均值。'}</div><div class="taxonomy-footer"><span class="shape-label">数值为作者报告，并非本网页复现</span>${figBtn('fig6')}</div></div></div>`}
 const shotData={'1':{a:67.8,b:75.2,t:'每类1窗 × 7类 = 7个训练窗口'},'5':{a:81.9,b:86.7,t:'每类5窗 × 7类 = 35个训练窗口'},'20':{a:85.7,b:89.3,t:'每类20窗 × 7类 = 140个训练窗口'},full:{a:87.3,b:90.4,t:'每类约45窗 × 7类 ≈ 315个训练窗口'}};
 function shotText(d){const sampling=shot==='full'?'使用其中一次训练录制的全部窗口':'从其中一次训练录制均匀随机抽窗';return `${d.t}（每位参与者、每一折）。每类先录3次、每次1分钟；${sampling}，另外两次完整录制测试，三次轮换。1窗是完整的2.56秒样本；这并非验证只录2.56秒即可达到相同结果。`}
 function study(){let d=shotData[shot];return `<div class="card visual-card">${cardHead('PERSONALIZED RECOGNITION','标注窗口增多，结果如何变化？','10位参与者的7类个人模型 · 跨次测试','论文图 8')}<div class="visual-body"><div class="shot-selector" id="shotPicker">${[['1','1 窗口'],['5','5 窗口'],['20','20 窗口'],['full','完整 1 分钟']].map(([v,s])=>`<button data-shot="${v}" class="${v===shot?'active':''}">${s}</button>`).join('')}</div><div class="shot-display"><div class="shot-box"><span>3 轴 · 平衡准确率</span><b id="shot3">${d.a}%</b></div><div class="shot-box"><span>6 轴 · 平衡准确率</span><b id="shot6">${d.b}%</b></div></div><div class="subtle-callout" id="shotCaption">${shotText(d)}</div><div class="taxonomy-footer"><span class="shape-label">图中仅列出正文明确报告的数字</span>${figBtn('fig8')}</div></div></div>`}
@@ -5643,7 +5647,7 @@ function attachSlide(l){
    const gap=$('#layerGap');if(gap)gap.addEventListener('input',()=>{config.spread=Number(gap.value);three.update(config)});
    }); }
  if(l.visual==='probe')$('#classRange').addEventListener('input',e=>{let n=Number(e.target.value);$('#classCount').textContent=`${n} 类`;$('#probeFormula').textContent=`385 × ${n} = ${(385*n).toLocaleString()} 参数`});
- if(l.visual==='offline')$('#graphPicker').addEventListener('click',e=>{const b=e.target.closest('[data-graph]');if(!b)return;graph=b.dataset.graph;$('#graphPicker').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));$('#comparisonChart').innerHTML=comparisonRows();$('#graphNote').textContent=graph==='published'?'SAMoSA / PrISM 基线使用9轴；UTD基线使用6轴。不同模型及输入应谨慎比较。':'全部使用相同6轴 ViT-1D；图示为论文表3的均值。'});
+ if(l.visual==='offline')$('#graphPicker').addEventListener('click',e=>{const b=e.target.closest('[data-graph]');if(!b)return;graph=b.dataset.graph;$('#graphPicker').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));$('#comparisonChart').innerHTML=comparisonRows();$('#graphNote').textContent=graph==='published'?'公开监督基线是各数据集既有的全监督运动模型，并非专指传统机器学习；SAMoSA / PrISM 为9轴，UTD为6轴。模型与输入不同，比较需谨慎。':'全部使用相同6轴 ViT-1D；图示为论文表3的均值。'});
  if(l.visual==='study')$('#shotPicker').addEventListener('click',e=>{const b=e.target.closest('[data-shot]');if(!b)return;shot=b.dataset.shot;let d=shotData[shot];$('#shotPicker').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));$('#shot3').textContent=`${d.a}%`;$('#shot6').textContent=`${d.b}%`;$('#shotCaption').textContent=shotText(d)});
  attachLearningLabs(l);
 }
