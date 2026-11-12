@@ -1034,12 +1034,12 @@ SOFTWARE.
       "steps": [
         {
           "title": "恢复位置结构",
-          "text": "编码器先处理可见token；解码时插入可学习的mask token并恢复位置顺序。",
+          "text": "编码器输出每个可见 token 的384维表示；解码时在缺失位置插入可学习的 mask token，恢复原序列位置。Mask token 是占位向量，不是放回被遮挡的真实信号。",
           "note": "PDF第5页§4.1.4。"
         },
         {
           "title": "解码器只服务预训练",
-          "text": "4层、192维、4头；恢复所有位置后的内部序列可理解为[B,N,192]。384到192的具体适配以及精确重建张量，论文没有逐项说明。",
+          "text": "解码器4层、192维、4头。384到192需要维度适配；可以逐 token 投影，但论文没有说明具体实现或投影与插入的先后顺序。重建阶段不做 token 均值池化。",
           "note": "PDF第5页§4.1.4。"
         },
         {
@@ -1080,7 +1080,7 @@ SOFTWARE.
           "解释只在遮挡位置计算MSE。",
           "下游时丢弃解码器。"
         ],
-        "notes": "遮挡重建分为编码和解码两个阶段。编码器只接收可见 token；随后模型按原始位置插入可学习的 mask token，再由四层轻量解码器重建信号。\n\n训练损失只在被遮挡的位置计算，使用预测值与真实信号之间的均方误差。这样，模型需要利用可见片段的上下文推断缺失内容，而不是只复制已经看到的输入。预训练结束后，作者保留编码器，解码器不参与下游分类。\n\n重建目标与活动分类目标并不相同，因此重建效果本身不能保证分类效果，还需要通过保留数据集和用户研究验证迁移能力。",
+        "notes": "遮挡重建分为编码和解码两个阶段。六轴时共有192个 token；按照网页中遮挡125个的示意，编码器接收67个可见 token，输出的形状是批量乘以67乘以384。\n\n解码阶段将可学习的 mask token 放入缺失位置。它们是占位符，不是原先被隐藏的信号。编码器宽度为384，解码器宽度为192，需要对表示做维度适配。一种理解是对每个可见 token 分别投影，再与 mask token 组合恢复192个位置；论文没有说明投影与插入的具体先后。预训练不会先把 token 平均成一个向量，解码器需要保留各位置的信息。\n\n四层解码器重建信号，损失只比较遮挡位置上的预测与真实值。预训练结束后，解码器被丢弃。下游识别中完整 token 序列经过冻结编码器，再沿 token 维做均值池化并输入个人分类头。",
         "demoCue": "在“分步数据流”依次查看“插回 → 解码 → 损失”，注意浅棕色 mask token 按原位置插回，损失只落在橙色遮挡格。"
       },
       "visual": "reconstruct",
@@ -1095,6 +1095,14 @@ SOFTWARE.
         {
           "title": "重建时位置如何还原",
           "text": "编码器输出仅覆盖可见token；训练过程根据保留的遮挡位置把可学习mask token放回原序列空位，形成面向解码器的完整位置结构。被遮挡位置的占位符不属于编码器输入。"
+        },
+        {
+          "title": "67×384、mask token 和 192 维如何衔接？",
+          "text": "六轴示意共192个token；若遮挡125个、保留67个，编码器输出是[B,67,384]。恢复序列时，在125个缺失位置加入可学习的mask token，它们是占位符，不是原先被遮挡的真实token。需要将编码器384维与解码器192维对齐：一种教学理解是逐个把可见token从384投影到192，再按原位置与192维mask token组合成[B,192,192]。论文没有明确投影、插入和解码位置编码的具体次序，上述形状路径不是已验证源码。67与125是网页的离散遮挡示意，不代表作者的取整规则。"
+        },
+        {
+          "title": "预训练为什么不先求均值？",
+          "text": "解码器需要逐位置重建被遮挡片段，预训练保留token序列，不能先把67个token平均成一个384维向量。下游分类是另一条路径：所有192个token进入冻结编码器，沿token维取均值，[B,192,384]变为[B,384]，再交给线性分类头；这条路径不用mask token或解码器。"
         },
         {
           "title": "解码器内部与输出维数",
@@ -4353,7 +4361,7 @@ const PIPELINE_STEPS = [
   {
     short: '插回', group: 'A',
     title: '解码前插回 mask token',
-    action: '按原索引插回可学习的 mask token，序列恢复到原长度；解码器宽度是 192 维（论文未说明 384→192 的具体做法）。',
+    action: '按原索引插入可学习的 mask token 占位符，恢复序列；384→192 是逐 token 的维度适配示意，不做均值池化。论文未说明适配与插入的具体先后。',
     evidence: '论文 §4.1.4：插回 mask token 并恢复位置；384→192 为推导',
   },
   {
@@ -4370,8 +4378,8 @@ const PIPELINE_STEPS = [
   },
   {
     short: '池化', group: 'B',
-    title: '推理时平均池化成 384 维',
-    action: '推理不遮挡：全部 token 进入冻结编码器，再沿 token 维逐维平均，得到 1 个 384 维窗口向量。',
+    title: '个人适配与分类：平均池化成 384 维',
+    action: '个人适配和后续分类都不遮挡：全部 token 进入冻结编码器，再沿 token 维逐维平均，得到 1 个 384 维窗口向量；预训练重建分支不做此池化。',
     evidence: '论文 §4.1.2、§4.2.1：推理全部 token，mean-pool 到 384 维',
   },
   {
@@ -4617,7 +4625,7 @@ function svgInsert(st, mask) {
   const cols = 16, size = 16, gap = 3, x = 96, y = 58;
   s += seqGrid(total, cols, x, y, size, gap, i => mask.has(i) ? '#d6b896' : COLOR[Math.floor(i / 32)]);
   s += `<text x="${x}" y="304" class="pv-lbl">原始顺序 [B, ${total}, 384]</text>`;
-  s += `<text x="${x}" y="322" class="pv-note">每个位置保留自己的时间与通道身份；浅棕色格子是可学习的 mask token（同一个向量）。</text>`;
+  s += `<text x="${x}" y="322" class="pv-note">每个位置保留自己的时间与通道身份；浅棕色格子是可学习的 mask token 占位符，不是原始信号。</text>`;
   s += `<rect x="420" y="116" width="14" height="14" rx="2" fill="#d6b896"/><text x="440" y="127" class="pv-tiny">蓝 = mask token</text>`;
   s += `<rect x="420" y="140" width="14" height="14" rx="2" fill="#c98a5e"/><text x="440" y="151" class="pv-tiny">彩色 = 可见 token</text>`;
   s += `<path d="M470 160 L520 160" stroke="#a19682" stroke-width="1.5" marker-end="url(#pvArrow)"/>`;
@@ -4788,7 +4796,7 @@ function makePipelineView(host, { lesson = 'tokens', onState = () => {} } = {}) 
         : state.step === 5
           ? `被遮挡的 ${mask.size} 个 token 直接从编码器输入中移除；只有 ${visible} 个可见 token 带着自己的原始位置进入 12 层 Transformer。`
           : state.step === 6
-            ? `按原索引插回 ${mask.size} 个可学习的 mask token，序列恢复到 ${total} 个；解码器宽度是 192 维（论文未说明 384→192 的具体做法）。`
+            ? `按原索引插入 ${mask.size} 个可学习 mask token 占位符，恢复 ${total} 个位置；384→192 逐 token 适配示意，预训练不做均值池化，论文未说明适配与插入的先后。`
             : state.step === 8
               ? `损失只统计被遮挡的 ${mask.size} 个 patch；可见位置不产生损失。预训练结束后解码器被丢弃。`
               : state.step === 9
@@ -5222,7 +5230,7 @@ function nnPosition(m) {
 }
 function nnMaskGrid(m,restore=false) {
   const mask=new Set(m.maskedIndices),x0=95,y0=72,cw=27,dy=m.axes===6?39:67;
-  let out=nnLabel(28,30,restore?'按原索引补回 mask token，再进入解码器':'遮挡位置从编码器序列移除，仍保留原位置索引',16,'#f1d7ac');
+  let out=nnLabel(28,30,restore?'按原索引插入 mask token 占位符，保留各位置；不做均值池化':'遮挡位置从编码器序列移除，仍保留原位置索引',16,'#f1d7ac');
   for(let r=0;r<m.axes;r++){
     out+=nnLabel(18,y0+r*dy+17,NN_AXIS_NAMES[r],12,NN_AXIS_COLORS[r]);
     for(let c=0;c<32;c++){
