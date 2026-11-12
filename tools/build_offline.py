@@ -24,9 +24,9 @@ katex=(root/'vendor/katex.min.js').read_text('utf8')
 lib=(root/'vendor/three.min.js').read_text('utf8')
 assert lib.startswith('var THREE=') and lib.rstrip().endswith('})();'), 'unexpected three bundle'
 
-view=(root/'src/three-view.js').read_text('utf8').replace("import * as THREE from '../vendor/three.min.module.js';",'').replace("import {pipelineMask} from './pipeline-view.js';",'').replace('export function makeThreeView','function makeThreeView').replace('export function makeTokenView','function makeTokenView')
+view=(root/'src/three-view.js').read_text('utf8').replace("import * as THREE from '../vendor/three.min.module.js';",'').replace("import {pipelineMask} from './pipeline-view.js';",'').replace('export function makeThreeView','function makeThreeView')
 pipeline=(root/'src/pipeline-view.js').read_text('utf8').replace('export const PIPELINE_STEPS','const PIPELINE_STEPS').replace('export function pipelineMask','function pipelineMask').replace('export function visibleIndex','function visibleIndex').replace('export function makePipelineView','function makePipelineView')
-app=(root/'src/app.js').read_text('utf8').replace("loadThreeView().then(","Promise.resolve({makeThreeView,makeTokenView}).then(").replace("const loadThreeView=()=>import('./three-view.js');",'').replace("import {makePipelineView} from './pipeline-view.js';",'').replace("import {describeToken,networkShapes} from './token-state.mjs';",'')
+app=(root/'src/app.js').read_text('utf8').replace("loadThreeView().then(","Promise.resolve({makeThreeView}).then(").replace("const loadThreeView=()=>import('./three-view.js');",'').replace("import {makePipelineView} from './pipeline-view.js';",'').replace("import {networkShapes} from './token-state.mjs';",'')
 tokenstate=(root/'src/token-state.mjs').read_text('utf8').replace('export function ','function ')
 translation=(root/'src/paper-zh.mjs').read_text('utf8').replace('export const paperTranslations','const paperTranslations').replace('export function getPaperTranslation','function getPaperTranslation')
 neuralmodel=(root/'src/neural-model.mjs').read_text('utf8').replace("import {pipelineMask} from './pipeline-view.js';",'').replace('export function ','function ')
@@ -42,7 +42,7 @@ for before,after in [
 for name in ['transfhar-source.zip','transfhar-explorer.html','docs/TransfHAR_30min_Speaker_Notes.md']:
  app=re.sub(r'<a href="'+re.escape(name)+r'" download>.*?</a>','',app)
 start=app.find("try {const r=await fetch('./src/course.json')");assert start>=0
-app=app[:start]+"try {course=JSON.parse(document.getElementById('embeddedCourse').textContent);const i=course.lessons.findIndex(x=>x.id===(location.hash.slice(1)==='vit1d'?'encoder':location.hash.slice(1)));current=i<0?0:i;render();setMenu(false);syncPressed()}catch(error){$('#main').textContent='无法载入课程内容：'+error.message}"
+app=app[:start]+"try {course=JSON.parse(document.getElementById('embeddedCourse').textContent);const i=course.lessons.findIndex(x=>x.id===lessonIdFromHash());current=i<0?0:i;render();setMenu(false);syncPressed()}catch(error){$('#main').textContent='无法载入课程内容：'+error.message}"
 assets={}
 for i in range(1,9):
  assets[f'fig{i}']=data_url(root/'assets'/f'fig{i}.webp','image/webp')
