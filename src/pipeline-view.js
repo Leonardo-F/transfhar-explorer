@@ -73,8 +73,8 @@ export const PIPELINE_STEPS = [
 
 const AXIS = ['acc X', 'acc Y', 'acc Z', 'gyro X', 'gyro Y', 'gyro Z'];
 const COLOR = ['#c98a5e', '#d9b380', '#c99a72', '#8aa9a0', '#a8bcb2', '#8aa9a0'];
-const LESSON_RANGE = { tokens: [0, 3], mae: [3, 5], encoder: [5, 9], reconstruct: [5, 8] };
-const LESSON_START = { tokens: 0, mae: 4, encoder: 5, reconstruct: 6 };
+const LESSON_RANGE = { tokens: [0, 3], mae: [3, 5], encoder: [3, 10], reconstruct: [5, 8] };
+const LESSON_START = { tokens: 0, mae: 4, encoder: 4, reconstruct: 6 };
 
 // Deterministic synthetic waveform in [-1, 1]. Teaching illustration only.
 function sig(ch, i) {
