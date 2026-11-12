@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { PIPELINE_STEPS, pipelineMask, visibleIndex } from '../src/pipeline-view.js';
+import { PIPELINE_STEPS, pipelineMask, visibleIndex } from '../src/js/pipeline-view.js';
 
 assert.equal(PIPELINE_STEPS.length, 11);
 assert.deepEqual(PIPELINE_STEPS.map(s => s.short), ['窗口', '分块', '投影', '位置', '遮挡', '编码', '插回', '解码', '损失', '池化', '线性头']);

@@ -2,3 +2,6 @@
 .DS_Store
 .trae-html-share-packages/
 transfhar-source.zip
+node_modules/
+__pycache__/
+*.pyc

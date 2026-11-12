@@ -1,22 +1,21 @@
-"""Regenerate web assets from the source paper and vendor files.
+"""Regenerate the paper page images and the lean KaTeX stylesheet.
 
-This script is only needed when the source assets change; the site and
-build_offline.py consume the generated files. Requirements:
+Only needed when the source assets or vendor files change. Requirements:
 
   * Python 3.9+ with Pillow (for image re-encoding)
-  * pdftoppm / pdfinfo from poppler (for paper page rasterisation)
+  * pdftoppm from poppler (for paper page rasterisation)
 
 Usage:
   python3 tools/build_assets.py            # regenerate everything
   python3 tools/build_assets.py pages      # only paper page WebPs
-  python3 tools/build_assets.py figures    # only figure crops
-  python3 tools/build_assets.py katex      # only the lean KaTeX CSS + font files
+  python3 tools/build_assets.py katex      # only the lean KaTeX CSS + fonts
 
 The page screenshots are rendered from assets/paper.pdf at 120 DPI, cropped
-to their content bounds and encoded as WebP q60; the figure crops are
-re-encoded from PNG to WebP q92. The KaTeX stylesheet is split into a lean
-CSS file that references external woff2 files and drops the font families
-the course never uses (Fraktur, SansSerif, Script, Typewriter).
+to their content bounds and encoded as WebP q60. The figure crops in
+assets/figures/ are final WebP assets; edit them there if they need to be
+replaced. The KaTeX stylesheet is split into a lean CSS file that references
+external woff2 files and drops the font families the course never uses
+(Fraktur, SansSerif, Script, Typewriter).
 """
 from __future__ import annotations
 
@@ -73,18 +72,6 @@ def build_pages() -> None:
         print(f"pages: {len(files)} files, {total / 1048576:.2f} MB")
 
 
-def build_figures() -> None:
-    total_in = total_out = 0
-    for i in range(1, 9):
-        src = ROOT / "assets" / f"fig{i}.png"
-        dst = ROOT / "assets" / f"fig{i}.webp"
-        image = Image.open(src).convert("RGB")
-        image.save(dst, "WEBP", quality=92, method=6)
-        total_in += src.stat().st_size
-        total_out += dst.stat().st_size
-    print(f"figures: {total_in / 1024:.0f} KB -> {total_out / 1024:.0f} KB")
-
-
 def build_katex() -> None:
     css_path = ROOT / "vendor" / "katex-embedded.css"
     css = css_path.read_text("utf8")
@@ -130,11 +117,9 @@ def build_katex() -> None:
 
 
 def main() -> None:
-    targets = sys.argv[1:] or ["pages", "figures", "katex"]
+    targets = sys.argv[1:] or ["pages", "katex"]
     if "pages" in targets:
         build_pages()
-    if "figures" in targets:
-        build_figures()
     if "katex" in targets:
         build_katex()
 

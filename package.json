@@ -1,5 +1,11 @@
 {
   "name": "transfhar-explorer",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "test": "node tests/token-state.test.mjs && node tests/pipeline-state.test.mjs && node tests/learning-views.test.mjs && node tests/neural-model.test.mjs && node tests/neural-playback.test.mjs",
+    "build": "python3 tools/build_offline.py",
+    "assets": "python3 tools/build_assets.py"
+  }
 }

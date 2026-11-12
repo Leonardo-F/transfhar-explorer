@@ -55,7 +55,7 @@
 - WebGL 不可用时的 Canvas 兼容视图已修复并在禁用 WebGL 的浏览器中验证：3D 面板能正常绘制、拖拽/缩放可用，无脚本错误（修复 `yaw` 未定义与投影缺少画布尺寸导致的空白画布）。
 - Token Lab 的传感器/片段滑杆与“4点→Token与位置”图在 WebGL 视图下会同步刷新文字、公式和 Token 图（修复非结构更新不回调 `onInfo` 的问题）。
 - 3D 中反复选择 Token 不再累积高亮框；销毁视图时显式释放 WebGL 上下文；Token 实验的静态画布改为按需渲染，不再 60fps 空转。
-- `node tests/token-state.test.mjs`、`node tests/pipeline-state.test.mjs` 通过；`python3 build_offline.py` 重新生成单文件，`file://` 打开后 11 步与 3D 标签可用，无脚本错误。
+- `node tests/token-state.test.mjs`、`node tests/pipeline-state.test.mjs` 通过；`python3 tools/build_offline.py` 重新生成单文件，`file://` 打开后 11 步与 3D 标签可用，无脚本错误。
 - 离线单文件 5,077,984 B（gzip 约 3.28 MB）；论文页 16 张共 2.33 MB，figure 8 张共 0.31 MB，Three.js 压缩版 0.53 MB，KaTeX 字体只保留 13 个 woff2。
 - 模块版默认章节首屏不请求 Three.js、不请求 KaTeX 字体；进入模型章节后才加载 `three-view.js` 与压缩版 Three.js，论文原图/页面在切换标签后才设置图片地址。
 - 方向键测试：焦点在步骤按钮上按 `→` 只切换步骤、不翻章；页面空白处按 `→` 正常翻章；`Esc` 关闭移动端目录并把焦点还给菜单按钮。
