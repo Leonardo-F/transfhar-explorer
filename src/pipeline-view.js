@@ -42,7 +42,7 @@ export const PIPELINE_STEPS = [
   {
     short: '插回', group: 'A',
     title: '解码前插回 mask token',
-    action: '按原索引插回可学习的 mask token，序列恢复到原长度；解码器宽度是 192 维（论文未说明 384→192 的具体做法）。',
+    action: '按原索引插入可学习的 mask token 占位符，恢复序列；384→192 是逐 token 的维度适配示意，不做均值池化。论文未说明适配与插入的具体先后。',
     evidence: '论文 §4.1.4：插回 mask token 并恢复位置；384→192 为推导',
   },
   {
@@ -59,8 +59,8 @@ export const PIPELINE_STEPS = [
   },
   {
     short: '池化', group: 'B',
-    title: '推理时平均池化成 384 维',
-    action: '推理不遮挡：全部 token 进入冻结编码器，再沿 token 维逐维平均，得到 1 个 384 维窗口向量。',
+    title: '个人适配与分类：平均池化成 384 维',
+    action: '个人适配和后续分类都不遮挡：全部 token 进入冻结编码器，再沿 token 维逐维平均，得到 1 个 384 维窗口向量；预训练重建分支不做此池化。',
     evidence: '论文 §4.1.2、§4.2.1：推理全部 token，mean-pool 到 384 维',
   },
   {
@@ -306,7 +306,7 @@ function svgInsert(st, mask) {
   const cols = 16, size = 16, gap = 3, x = 96, y = 58;
   s += seqGrid(total, cols, x, y, size, gap, i => mask.has(i) ? '#d6b896' : COLOR[Math.floor(i / 32)]);
   s += `<text x="${x}" y="304" class="pv-lbl">原始顺序 [B, ${total}, 384]</text>`;
-  s += `<text x="${x}" y="322" class="pv-note">每个位置保留自己的时间与通道身份；浅棕色格子是可学习的 mask token（同一个向量）。</text>`;
+  s += `<text x="${x}" y="322" class="pv-note">每个位置保留自己的时间与通道身份；浅棕色格子是可学习的 mask token 占位符，不是原始信号。</text>`;
   s += `<rect x="420" y="116" width="14" height="14" rx="2" fill="#d6b896"/><text x="440" y="127" class="pv-tiny">蓝 = mask token</text>`;
   s += `<rect x="420" y="140" width="14" height="14" rx="2" fill="#c98a5e"/><text x="440" y="151" class="pv-tiny">彩色 = 可见 token</text>`;
   s += `<path d="M470 160 L520 160" stroke="#a19682" stroke-width="1.5" marker-end="url(#pvArrow)"/>`;
@@ -477,7 +477,7 @@ export function makePipelineView(host, { lesson = 'tokens', onState = () => {} }
         : state.step === 5
           ? `被遮挡的 ${mask.size} 个 token 直接从编码器输入中移除；只有 ${visible} 个可见 token 带着自己的原始位置进入 12 层 Transformer。`
           : state.step === 6
-            ? `按原索引插回 ${mask.size} 个可学习的 mask token，序列恢复到 ${total} 个；解码器宽度是 192 维（论文未说明 384→192 的具体做法）。`
+            ? `按原索引插入 ${mask.size} 个可学习 mask token 占位符，恢复 ${total} 个位置；384→192 逐 token 适配示意，预训练不做均值池化，论文未说明适配与插入的先后。`
             : state.step === 8
               ? `损失只统计被遮挡的 ${mask.size} 个 patch；可见位置不产生损失。预训练结束后解码器被丢弃。`
               : state.step === 9

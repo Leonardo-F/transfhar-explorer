@@ -86,7 +86,7 @@ function nnPosition(m) {
 }
 function nnMaskGrid(m,restore=false) {
   const mask=new Set(m.maskedIndices),x0=95,y0=72,cw=27,dy=m.axes===6?39:67;
-  let out=nnLabel(28,30,restore?'按原索引补回 mask token，再进入解码器':'遮挡位置从编码器序列移除，仍保留原位置索引',16,'#f1d7ac');
+  let out=nnLabel(28,30,restore?'按原索引插入 mask token 占位符，保留各位置；不做均值池化':'遮挡位置从编码器序列移除，仍保留原位置索引',16,'#f1d7ac');
   for(let r=0;r<m.axes;r++){
     out+=nnLabel(18,y0+r*dy+17,NN_AXIS_NAMES[r],12,NN_AXIS_COLORS[r]);
     for(let c=0;c<32;c++){
