@@ -24,7 +24,7 @@ katex=(root/'vendor/katex.min.js').read_text('utf8')
 lib=(root/'vendor/three.min.js').read_text('utf8')
 assert lib.startswith('var THREE=') and lib.rstrip().endswith('})();'), 'unexpected three bundle'
 
-view=(root/'three-view.js').read_text('utf8').replace("import * as THREE from './vendor/three.min.module.js';",'').replace('export function makeThreeView','function makeThreeView').replace('export function makeTokenView','function makeTokenView')
+view=(root/'three-view.js').read_text('utf8').replace("import * as THREE from './vendor/three.min.module.js';",'').replace("import {pipelineMask} from './pipeline-view.js';",'').replace('export function makeThreeView','function makeThreeView').replace('export function makeTokenView','function makeTokenView')
 pipeline=(root/'pipeline-view.js').read_text('utf8').replace('export const PIPELINE_STEPS','const PIPELINE_STEPS').replace('export function pipelineMask','function pipelineMask').replace('export function visibleIndex','function visibleIndex').replace('export function makePipelineView','function makePipelineView')
 app=(root/'app.js').read_text('utf8').replace("loadThreeView().then(","Promise.resolve({makeThreeView,makeTokenView}).then(").replace("const loadThreeView=()=>import('./three-view.js');",'').replace("import {makePipelineView} from './pipeline-view.js';",'').replace("import {describeToken,networkShapes} from './token-state.mjs';",'')
 tokenstate=(root/'token-state.mjs').read_text('utf8').replace('export function ','function ')

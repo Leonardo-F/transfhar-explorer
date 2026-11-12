@@ -4020,6 +4020,7 @@ void main() {
 const assetURLs=JSON.parse(document.getElementById("embeddedAssets").textContent);
 
 
+
 // Zoom stays local to the drawing surface; scrolling elsewhere still scrolls the page.
 function makeZoomController(canvas, apply, onZoom=()=>{}){
  let value=1, gestureStart=null, pinchStart=null;const touches=new Map();
@@ -4058,17 +4059,7 @@ function makeThreeView(originalCanvas, onInfo, onZoom=()=>{}){
  let tokenMeshes=[],tempGeos=[],particles=[],selectedRef=null,raycaster,mouse;
  const HOME={x:-.42,y:.62};
  const axisColors=[0xc98a5e,0xd9b380,0xc99a72,0x8aa9a0,0xa8bcb2,0x8aa9a0];
- const hash=n=>{let x=Math.imul(n+1,2654435761);x=Math.imul(x^(x>>>16),2246822519);x=Math.imul(x^(x>>>13),3266489917);return (x^(x>>>16))>>>0};
- function maskData(){
-  const {axes,mode}=state,total=axes*32;
-  if(mode==='inference')return {hidden:new Set(),total};
-  const ranked=Array.from({length:total},(_,i)=>i).sort((a,b)=>hash(a)-hash(b));
-  const columns=new Set(Array.from({length:32},(_,i)=>i).sort((a,b)=>hash(a+21)-hash(b+21)).slice(0,21));
-  const rows=new Set(Array.from({length:axes},(_,i)=>i).sort((a,b)=>hash(a+400)-hash(b+400)).slice(0,Math.round(axes*.65)));
-  const random=new Set(ranked.slice(0,Math.round(total*.65))),hidden=new Set();
-  for(let r=0;r<axes;r++)for(let c=0;c<32;c++)if(mode==='random'?random.has(r*32+c):mode==='time'?columns.has(c):rows.has(r))hidden.add(r*32+c);
-  return {hidden,total};
- }
+ function maskData(){const {axes,mode}=state;return {hidden:pipelineMask(axes,mode),total:axes*32};}
  function info(fallback=false){const {hidden,total}=maskData();let col=Math.max(0,Math.min(31,state.col)),row=Math.max(0,Math.min(state.axes-1,state.row));onInfo({axes:state.axes,total,maskedIndices:[...hidden],masked:hidden.size,percent:Math.round(hidden.size/total*1000)/10,mode:state.mode,stage:state.stage,phase:state.phase,focusStep:state.focusStep,row,col,isMasked:hidden.has(row*32+col),start:col*4,end:col*4+3,t0:(col*4/50).toFixed(2),t1:((col*4+4)/50).toFixed(2),fallback});}
  try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});}
  catch(error){return makeFallback()}

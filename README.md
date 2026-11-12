@@ -1,133 +1,43 @@
 # TransfHAR Explorer
 
-一个面向论文学习与组会分享的中文交互式网页，围绕 TransfHAR 的腕部惯性传感器活动识别方法，结合论文原图、逐页中文对照、公式、分步数据流、神经网络动图和 Three.js 结构总览，帮助读者理解数据处理、模型训练、个性化识别与部署。项目包含 14 个章节及一份约 30 分钟的讲稿。
+面向论文学习与组会分享的中文交互网页：阅读论文原图与中文译注，跟随分步数据流、神经网络动图和三维结构理解腕部 IMU 活动识别。包含 14 章与约 30 分钟讲稿。
 
-## 项目目的与内容
+## 使用
 
-- **理解输入数据**：介绍数据集、L1–L4 活动层次、2.56 秒窗口和归一化，并展示论文统计图。
-- **看清模型如何工作**：模型章节默认打开 11 步“分步数据流”，逐帧显示窗口、分块、共享卷积、位置编码、三种遮挡、只编码可见 Token、插回 mask token、解码、遮挡损失、平均池化与线性头；每一步都给出输入/输出形状与论文依据。另有“4点→Token与位置”逐步实验和可旋转的 3D 结构总览。
-- **阅读论文证据**：在页面中查看论文原图及对应原页，了解离线评估、用户研究与消融实验。
-- **讨论实际应用**：区分论文中的腕表原型与产品化设想，讨论用户特定分类头的训练、部署和局限。
+- **离线阅读**：下载 [transfhar-explorer.html](transfhar-explorer.html)，直接在现代浏览器打开。
+- **修改源码**：在仓库目录运行 `python3 -m http.server 8000`，访问 `http://localhost:8000`。修改后运行 `python3 build_offline.py` 生成离线单文件。
+- **演示**：模型章节可在分步数据流、论文原图、Token 实验、神经网络动图和 3D 总览之间切换。顶栏“讲稿”打开演讲提示；原文页提供中文对照。
 
-论文原文页的“中文对照”提供逐页中文译文与译注，重点覆盖正文和图表说明；参考文献、密集矩阵及部分表格细项保留原文，并非逐词全文翻译。译文未经论文作者审校，数字与具体表述应以原文为准。
+## 文件
 
-网页用于教学与分享，**不是论文官方实现**。论文实验数值来自作者报告；分步数据流中的波形与重建柱是明确标注的合成教学示意，不是数据集样本或模型输出；3D 几何、遮挡和数学反例同样是教学示意。本仓库不含已训练编码器或可直接用于产品的分类模型。具体核查和未确认之处见 [VERIFICATION.md](VERIFICATION.md) 和 [REVIEW_NOTES.md](REVIEW_NOTES.md)。
+| 路径 | 用途 |
+| --- | --- |
+| `index.html`、`style.css`、`app.js` | 页面入口、样式和交互 |
+| `course.json`、`paper-zh.mjs` | 课程内容和论文中文译注 |
+| `pipeline-view.js`、`token-state.mjs` | 分步数据流、遮挡和形状计算 |
+| `neural-flow.mjs`、`neural-model.mjs`、`three-view.js` | 网络动图、教学算例和三维视图 |
+| `build_offline.py`、`transfhar-explorer.html` | 离线构建脚本及生成的单文件 |
+| `assets/`、`vendor/`、`build_assets.py`、`tools/` | 论文素材、依赖及资源生成工具 |
+| `tests/`、`VERIFICATION.md`、`REVIEW_NOTES.md` | 自动测试与内容核查 |
+| `TransfHAR_30min_Speaker_Notes.md` | 独立讲稿 |
 
-## 快速开始
+资源重建需要 Pillow 和 Poppler；第三方依赖的生成方式见 [vendor/README.md](vendor/README.md)。
 
-### 方式一：离线单文件
+## 验证
 
-下载仓库后，直接用现代浏览器打开 [transfhar-explorer.html](transfhar-explorer.html)。该文件约 5.1 MB，内嵌课程内容、公式、字体和论文页面图像，适合离线分享。WebGL 不可用时，相关交互会使用 Canvas 兼容视图。
+需要 Node.js，依次运行：
 
-### 方式二：修改源码并本地预览
-
-在仓库根目录运行：
-
-```bash
-python3 -m http.server 8000
-```
-
-在浏览器访问 <http://localhost:8000>。模块化版本通过 HTTP 读取课程和 JavaScript 模块，请不要直接双击 `index.html`。修改源码后，重新生成离线网页：
-
-```bash
-python3 build_offline.py
-```
-
-检查 Token 索引、遮挡、训练／推理形状和 11 步流程计数（需安装 Node.js）：
-
-```bash
+```sh
 node tests/token-state.test.mjs
 node tests/pipeline-state.test.mjs
 node tests/learning-views.test.mjs
 node tests/neural-model.test.mjs
 node tests/neural-playback.test.mjs
+python3 build_offline.py
 ```
 
-源码请使用 GitHub 的 **Code → Download ZIP** 下载；网页中的下载区只保留离线单文件、讲稿与许可入口。
-
-## 资源与依赖的重新生成
-
-构建脚本只依赖 Python 标准库；只有重新生成图片、字体或压缩版 Three.js 时才需要额外工具：
-
-```bash
-# 论文页截图（120 DPI、裁白边、WebP）、figure 裁切与精简 KaTeX 样式
-python3 build_assets.py            # 需要 Python Pillow 与 poppler 的 pdftoppm
-
-# 压缩版 Three.js（esbuild，见 tools/three-entry.js 与 vendor/README.md）
-npx esbuild tools/three-entry.js --bundle --minify --format=iife --global-name=THREE \
-  --legal-comments=none --outfile=vendor/three.min.js
-npx esbuild tools/three-entry.js --bundle --minify --format=esm \
-  --legal-comments=none --outfile=vendor/three.min.module.js
-```
-
-生成的 `vendor/three.min.*`、`vendor/fonts/`、`assets/fig*.webp` 与 `assets/pages/*.webp` 已提交到仓库，日常修改文字或交互后只需运行 `python3 build_offline.py`。
-
-## 文件目录
-
-```text
-transfhar-explorer/
-├── index.html                         # 模块化网页入口
-├── app.js                             # 页面、交互、图表与论文原页展示
-├── pipeline-view.js                   # 模型章节的 11 步分步数据流
-├── style.css                          # 样式与响应式布局
-├── three-view.js                      # Three.js 结构总览与兼容视图
-├── neural-flow.mjs                    # 论文架构、Token 追踪与计算动画（SVG）
-├── neural-model.mjs                   # 可复算的分块、卷积、位置、注意力与损失算例
-├── paper-zh.mjs                       # 按原文页组织的中文译文与译注
-├── token-state.mjs                    # Token 索引、遮挡和张量形状计算
-├── course.json                        # 章节内容、公式、来源与讲解提示
-├── build_offline.py                   # 生成独立离线 HTML
-├── build_assets.py                    # 重新生成页面图、figure 与精简 KaTeX 样式
-├── transfhar-explorer.html            # 可直接打开的离线网页（约 5.1 MB）
-├── TransfHAR_30min_Speaker_Notes.md   # 约 30 分钟讲稿
-├── VERIFICATION.md                    # 内容和功能核查记录
-├── REVIEW_NOTES.md                    # 审查说明与待核实事项
-├── tests/
-│   ├── token-state.test.mjs           # 索引、遮挡及形状测试
-│   ├── pipeline-state.test.mjs        # 11 步流程与遮挡计数测试
-│   ├── learning-views.test.mjs        # 中文对照、导航、答案展示和动画交互测试
-│   ├── neural-model.test.mjs          # 分块、共享卷积与模型算例的数值检查
-│   └── neural-playback.test.mjs       # 扫描、播放、隐藏暂停和阶段切换
-├── tools/
-│   └── three-entry.js                 # 压缩版 Three.js 的打包入口
-├── assets/
-│   ├── paper.pdf                      # 论文原文
-│   ├── fig1.webp … fig8.webp          # 网页使用的论文图像裁切
-│   ├── fig1.png … fig8.png            # 转换前的 PNG 源图（保留以便重新生成）
-│   └── pages/                         # 论文 16 页截图（WebP，120 DPI）
-└── vendor/                            # Three.js、KaTeX、压缩版与字体
-```
-
-## 演示操作
-
-- 键盘：`←` / `→` 切换章节；在分步数据流内用 `←` / `→` 切换步骤；`Esc` 退出放大演示或关闭移动端目录；页面顶部有“跳到正文”链接。
-- 模型章节默认打开“分步数据流”：点击顶部 11 个步骤，或用“上一步/下一步”逐步查看；点击下方网格里的任意 Token，可在后续步骤追踪它是否被遮挡、在编码器输入中的序号以及位置。
-- 在“分步数据流”顶部切换 3 轴/6 轴和随机/时间/通道遮挡，所有计数与形状随之变化；第 9 步起显示推理路径。
-- “3D结构总览”支持待机自转、拖动旋转和缩放；拖动后停止待机自转。WebGL 不可用时退回 Canvas 兼容视图。
-- “神经网络动图”展示论文的模块架构：4 点分块、共享 Conv1D 的 384 个特征、时间和通道位置相加、12 层 pre-norm 编码器、6 个 64 维注意力头、384→1536→384 前馈层，以及遮挡恢复／4 层解码／MSE 或均值池化／个人线性头。可以点击全部 96/192 个 Token，逐块扫描一条轴的 32 个片段，展开特征维度、注意力头和编码器层。支持暂停、单步、速度选择；手动选择会暂停，后台标签和隐藏面板会停止播放。
-- 三维面板支持图内缩放按钮、鼠标滚轮和恢复视角；触屏可使用双指缩放。
-- 移动端点击左上角菜单打开目录，可用关闭按钮、遮罩或 `Esc` 退出。
-- 通过论文图和原页切换核对结论；在原文页点击“中文对照”，显示与所选页码对应的译文与译注。
-- 顶栏“讲稿”打开右侧讲稿栏，显示当前章节提示；点击栏内关闭按钮返回。小屏幕上讲稿栏覆盖在正文之上。
-
-数值区使用确定性的合成信号和示例权重：卷积逐项乘加、位置向量相加、一个 64 维注意力头的查询（涵盖全部可见 Token）、独立 FFN 子层、均值池化、线性头及遮挡 MSE 都可复算。它没有已训练模型权重，也未执行完整 12 层网络；层选择仅放大同构架构，不改变算例。解码器 384→192 的衔接和 4 点输出在页面上标为形状推导。时间／整通道遮挡在离散网格上取整，并显示实际比例；论文报告比例为 65%。
-
-“深入理解”、自查题参考答案与思考题要点均直接展示，无需逐项选择或展开。
-
-## 动画工具
-
-3Blue1Brown 作者维护的 [Manim](https://github.com/3b1b/manim) 适合用 Python 制作数学讲解动画；[Motion Canvas](https://motioncanvas.io/docs/) 适合用 TypeScript 编排二维矢量动画；[Three.js](https://threejs.org/) 适合可交互三维场景。本项目保留已有 Three.js 三维视图，新增的二维动图使用浏览器原生 SVG 动画，以便交互和离线使用，不依赖 Manim 或 Motion Canvas。
-
-## 性能与可访问性
-
-- **离线包体积**：从 8.49 MB 降到约 5.1 MB（gzip 约 3.3 MB）。做法包括论文页按 120 DPI 重新渲染并裁掉白边、figure 转 WebP、Three.js 压缩、裁掉未使用的 KaTeX 字族、不再内嵌未引用的图。
-- **首屏**：模块版默认章节不再下载 Three.js 和 KaTeX 字体；3D 视图与 Token 实验在进入模型章节后才惰性加载，论文原图/页面按需加载，图片带尺寸或延迟解码以减少布局抖动。
-- **无障碍**：跳过链接、方向键作用域（不会在控件上误翻章）、分步数据流焦点保持、移动端目录 `inert`/`Esc`/遮罩、可选状态补充 `aria-pressed`/`aria-current`、提高小字对比度与焦点环对比度。
-- **动效偏好**：尊重 `prefers-reduced-motion`，开启后 3D 改为单帧渲染、关闭持续粒子与脉冲动画，平滑滚动改为即时跳转。
-- **演讲模式**：放大标题与分步数据流说明文字，便于投影讲解。
+模型动画使用合成信号与示例权重，不含已训练模型或真实预测。中文对照是逐页译文和译注，并非逐词全文翻译；详细依据和限制见 [VERIFICATION.md](VERIFICATION.md)。
 
 ## 论文与许可
 
-Aidan Bradshaw, Riku Arakawa, Xin Liu, Karan Ahuja. *TransfHAR: Self-Supervised Wrist Representations for On-Demand Activity Recognition*. arXiv:2608.15861v2, 2026. DOI: [10.1145/3830398.3830553](https://doi.org/10.1145/3830398.3830553). [论文原文](https://arxiv.org/abs/2608.15861)。论文及其图像遵循 CC BY 4.0，使用时应保留作者和许可信息。
-
-本项目原创代码采用 [MIT 许可证](LICENSE)。论文及其图像、引用材料，以及 `vendor/` 中的 Three.js 和 KaTeX 等第三方内容仍遵循各自的许可；离线 HTML 包含这些第三方内容，使用或再分发时须同时遵守其相应许可。
+Bradshaw 等，[TransfHAR: Self-Supervised Wrist Representations for On-Demand Activity Recognition](https://arxiv.org/abs/2608.15861)，2026。论文及图片遵循 CC BY 4.0。项目原创代码采用 [MIT](LICENSE)；论文素材和 `vendor/` 第三方依赖遵循各自许可。
