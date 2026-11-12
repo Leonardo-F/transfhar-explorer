@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {getArchitectureModel, patchProjection, positionExample, attentionExample, ffnExample, poolingExample, reconstructionExample} from '../neural-model.mjs';
+import {getArchitectureModel, patchProjection, positionExample, attentionExample, ffnExample, poolingExample, reconstructionExample} from '../src/neural-model.mjs';
 
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-10,`${a} != ${b}`);
 for(const axes of [3,6]) for(const mode of ['pretrain','inference']) {

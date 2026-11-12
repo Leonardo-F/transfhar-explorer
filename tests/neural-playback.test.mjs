@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {makeNeuralView, getNeuralModel, renderNeuralDiagram} from '../neural-flow.mjs';
+import {makeNeuralView, getNeuralModel, renderNeuralDiagram} from '../src/neural-flow.mjs';
 
 const saved={set:global.setInterval,clear:global.clearInterval,doc:global.document,match:global.matchMedia};
 let timer=null,delay=0,visibility,docHidden=false;
