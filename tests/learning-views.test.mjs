@@ -75,7 +75,7 @@ await test('reading notes combine explanations and direct answers',()=>{
  runInNewContext(line+'\nthis.deepDive=deepDive',ctx);
  for(const l of course.lessons){
   const notes=ctx.deepDive(l);
-  assert.match(notes,/<details class="deep-section reading-notes">/);
+  assert.match(notes,/<details class="deep-section reading-notes" open>/);
   assert.ok(notes.includes(l.questions[0].explanation));
   assert.ok(notes.includes(l.questions[0].options[l.questions[0].answer]));
   assert.ok(notes.includes(l.reflection.prompt));
