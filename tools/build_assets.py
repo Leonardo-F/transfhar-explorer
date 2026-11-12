@@ -7,10 +7,10 @@ build_offline.py consume the generated files. Requirements:
   * pdftoppm / pdfinfo from poppler (for paper page rasterisation)
 
 Usage:
-  python3 build_assets.py            # regenerate everything
-  python3 build_assets.py pages      # only paper page WebPs
-  python3 build_assets.py figures    # only figure crops
-  python3 build_assets.py katex      # only the lean KaTeX CSS + font files
+  python3 tools/build_assets.py            # regenerate everything
+  python3 tools/build_assets.py pages      # only paper page WebPs
+  python3 tools/build_assets.py figures    # only figure crops
+  python3 tools/build_assets.py katex      # only the lean KaTeX CSS + font files
 
 The page screenshots are rendered from assets/paper.pdf at 120 DPI, cropped
 to their content bounds and encoded as WebP q60; the figure crops are
@@ -29,7 +29,7 @@ from pathlib import Path
 
 from PIL import Image, ImageChops
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 EXCLUDED_FAMILIES = {
     "KaTeX_Fraktur",
     "KaTeX_SansSerif",

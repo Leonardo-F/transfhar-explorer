@@ -1,4 +1,4 @@
-import * as THREE from './vendor/three.min.module.js';
+import * as THREE from '../vendor/three.min.module.js';
 import {pipelineMask} from './pipeline-view.js';
 
 // Zoom stays local to the drawing surface; scrolling elsewhere still scrolls the page.

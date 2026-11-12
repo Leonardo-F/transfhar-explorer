@@ -18,4 +18,4 @@ npx esbuild tools/three-entry.js --bundle --minify --format=esm \
   --legal-comments=none --outfile=vendor/three.min.module.js
 ```
 
-精简 KaTeX 样式与字体由 `python3 build_assets.py katex` 重新生成。
+精简 KaTeX 样式与字体由 `python3 tools/build_assets.py katex` 重新生成。

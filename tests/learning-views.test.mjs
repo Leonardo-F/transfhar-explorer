@@ -3,7 +3,7 @@ import {readFileSync, existsSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-const app=readFileSync(new URL('../app.js',import.meta.url),'utf8');
+const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
 const failures=[];
 async function test(name,fn){try{await fn();console.log('PASS',name)}catch(error){failures.push(name);console.error('FAIL',name,error.message)}}
 
@@ -28,7 +28,7 @@ await test('presenter notes have reading room and no timer controls',()=>{
  assert.match(out,/speaker-close/);assert.match(out,/正文/);assert.doesNotMatch(out,/timerToggle|timerReset|timerValue/);
 });
 await test('all source pages have page-specific Chinese reading text',async()=>{
- const file=new URL('../paper-zh.mjs',import.meta.url);
+ const file=new URL('../src/paper-zh.mjs',import.meta.url);
  assert.ok(existsSync(file),'missing Chinese page translations');
  const {paperTranslations}=await import(file);
  for(let p=1;p<=16;p++){
@@ -40,7 +40,7 @@ await test('all source pages have page-specific Chinese reading text',async()=>{
  assert.match(JSON.stringify(paperTranslations['9']),/86\.7/);
 });
 await test('translation follows the selected page and hides for a figure',async()=>{
- const {getPaperTranslation}=await import('../paper-zh.mjs');
+ const {getPaperTranslation}=await import('../src/paper-zh.mjs');
  const nodes={},cls=()=>({values:new Set(),toggle(k,v){v?this.values.add(k):this.values.delete(k)},remove(k){this.values.delete(k)}});
  for(const id of ['inlinePaperImage','inlinePaper','inlinePageSelect','inlineScroll','inlineCaption','inlineFigureTab','inlinePageTab','paperTranslation','translationToggle','inlinePaperGrid','stagePaper'])
    nodes['#'+id]={classList:cls(),style:{},dataset:{},setAttribute(k,v){this[k]=v},scrollIntoView(){}};
@@ -57,7 +57,7 @@ await test('translation follows the selected page and hides for a figure',async(
  ctx.show('page',9,false);assert.equal(nodes['#paperTranslation'].hidden,false);assert.match(nodes['#paperTranslation'].innerHTML,/86\.7/);
 });
 await test('architecture distinguishes training and inference branches',async()=>{
- const {getNeuralModel,renderNeuralDiagram}=await import('../neural-flow.mjs');
+ const {getNeuralModel,renderNeuralDiagram}=await import('../src/neural-flow.mjs');
  const train=getNeuralModel({axes:3,mode:'pretrain',step:9});
  const inference=getNeuralModel({axes:6,mode:'inference',step:7});
  assert.equal(train.tokenCount,96);assert.equal(inference.tokenCount,192);
@@ -69,7 +69,7 @@ await test('architecture distinguishes training and inference branches',async()=
  assert.match(encoder,/1536/);assert.match(encoder,/animateMotion/);
 });
 await test('reading notes combine explanations and direct answers',()=>{
- const course=JSON.parse(readFileSync(new URL('../course.json',import.meta.url),'utf8'));
+ const course=JSON.parse(readFileSync(new URL('../src/course.json',import.meta.url),'utf8'));
  const ctx={h:String};
  const line=app.split('\n').find(x=>x.startsWith('function deepDive('));
  runInNewContext(line+'\nthis.deepDive=deepDive',ctx);
@@ -83,7 +83,7 @@ await test('reading notes combine explanations and direct answers',()=>{
  }
 });
 await test('neural storyboard controls change state and stop playback when hidden',async()=>{
- const {makeNeuralView}=await import('../neural-flow.mjs');
+ const {makeNeuralView}=await import('../src/neural-flow.mjs');
  const updates=[];let handler,paused=0,unpaused=0;
  const svg={pauseAnimations(){paused++},unpauseAnimations(){unpaused++}};
  const root={innerHTML:'',querySelector:s=>s==='svg'?svg:null,contains:()=>true,addEventListener:(name,fn)=>{if(name==='click')handler=fn},removeEventListener:()=>{handler=null}};
@@ -96,7 +96,7 @@ await test('neural storyboard controls change state and stop playback when hidde
  view.setVisible(false);assert.ok(paused>0);view.destroy();assert.equal(handler,null);
 });
 await test('playing storyboard advances through the teaching steps and stops offscreen',async()=>{
- const {makeNeuralView}=await import('../neural-flow.mjs');
+ const {makeNeuralView}=await import('../src/neural-flow.mjs');
  const realSet=global.setInterval,realClear=global.clearInterval;let tick=null,cleared=false;
  global.setInterval=fn=>{tick=fn;return 42};global.clearInterval=()=>{cleared=true;tick=null};
  try{
@@ -108,7 +108,7 @@ await test('playing storyboard advances through the teaching steps and stops off
  }finally{global.setInterval=realSet;global.clearInterval=realClear}
 });
 await test('keyboard focus is retained when storyboard controls redraw',async()=>{
- const {makeNeuralView}=await import('../neural-flow.mjs');
+ const {makeNeuralView}=await import('../src/neural-flow.mjs');
  const prevDocument=global.document;let handler,focused='';
  const old={dataset:{nnMode:'pretrain'},hasAttribute:n=>n==='data-nn-mode'};
  global.document={activeElement:old};
@@ -122,7 +122,7 @@ await test('keyboard focus is retained when storyboard controls redraw',async()=
  }finally{global.document=prevDocument}
 });
 await test('automatic animation preserves keyboard focus during a step change',async()=>{
- const {makeNeuralView}=await import('../neural-flow.mjs');
+ const {makeNeuralView}=await import('../src/neural-flow.mjs');
  const savedDocument=global.document,savedSet=global.setInterval,savedClear=global.clearInterval;
  let tick,focused='';const active={dataset:{nnMode:'inference'},hasAttribute:n=>n==='data-nn-mode'};
  global.document={activeElement:active};global.setInterval=fn=>(tick=fn,42);global.clearInterval=()=>{};

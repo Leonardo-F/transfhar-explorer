@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {describeToken, networkShapes} from '../token-state.mjs';
+import {describeToken, networkShapes} from '../src/token-state.mjs';
 const token=describeToken({axes:6,axis:2,patch:31,dim:384,mode:'random',maskedIndices:[95]});
 assert.deepEqual(token.points,[124,125,126,127]);
 assert.equal(token.axisName,'acc Z');
